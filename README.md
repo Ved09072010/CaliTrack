@@ -1,38 +1,40 @@
 # CaliTrack
 
-A free, mobile-first calisthenics tracker. CaliTrack is being built in small
-phases with plain HTML, CSS, and JavaScript.
+A free, mobile-first calisthenics tracker built with React, Vite, and plain CSS.
+Workout and body-weight records stay in this browser's local storage.
 
 ## What works now
 
 - Five-tab navigation: Home, Workouts, Habits, Diet, and Library.
-- Responsive slate-and-cobalt theme with automatic light and dark modes.
-- Browser-only data storage helpers and date utilities.
-- Workout logger with automatic date and time, reps or hold seconds, notes, recent exercises, and grouped history.
+- Responsive dark slate-and-cobalt theme with five-tab navigation.
+- React UI, with all saved data accessed through the shared storage module.
+- Workout logger automatically records the date and time, with reps or hold seconds, notes, recent exercises, and grouped history.
 - Edit and delete saved workouts.
 - Weekly workout, rep, and streak summaries; exercise records and progress charts.
 - Body-weight logging and a weight-trend chart.
 
 ## Run locally
 
-1. Open this folder in Visual Studio Code.
-2. Start a local server. If Python is installed, open the VS Code terminal and run:
+1. Install [Node.js](https://nodejs.org/).
+2. Open this folder in Visual Studio Code and run these commands in the terminal:
 
    ```powershell
-   py -m http.server 8000
+   npm install
+   npm run dev
    ```
 
-3. Open `http://localhost:8000` in your browser.
+3. Open the local URL printed by Vite.
 4. Use the bottom navigation to switch tabs. To view browser errors, open Developer
    Tools with `F12` and select the **Console** tab.
-5. Stop the local server with `Ctrl+C` in the terminal.
+5. Stop the development server with `Ctrl+C` in the terminal.
+
+To make a production build, run `npm run build`. Vite writes the ready-to-publish
+site to the `dist` folder. Preview it locally with `npm run preview`.
 
 ## Publish with GitHub Pages
 
-The Git repository is already connected to GitHub. After committing your changes,
-push the branch with `git push`. In the repository's GitHub settings, open
-**Pages**, choose the `main` branch and `/ (root)` folder, then save. GitHub will
-show the published URL on that page.
+Build the site with `npm run build`, then publish the contents of `dist` using
+GitHub Pages. For a local check first, run `npm run preview`.
 
 ## Build progress
 

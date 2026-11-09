@@ -12,20 +12,6 @@
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light;
-    --page: #f5f7fb;
-    --surface: #fff;
-    --soft: #e9eef6;
-    --text: #1e293b;
-    --muted: #536174;
-    --accent: #285ea8;
-    --accent-ink: #fff;
-    --line: #dce3ed;
-  }
-}
-
 * { box-sizing: border-box; }
 body { min-width: 320px; min-height: 100vh; margin: 0; background: var(--page); color: var(--text); }
 button, input, select, textarea { font: inherit; }
@@ -87,7 +73,6 @@ h2 { margin: 0; font-size: 1rem; }
 .field input, .field select, .field textarea { width: 100%; min-height: 46px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--text); }
 .field textarea { resize: vertical; }
 .field :focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.date-time-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .set-heading, .form-actions { display: flex; align-items: end; justify-content: space-between; gap: 10px; }
 .mode-control { display: grid; min-width: 0; gap: 6px; }
 .control-label { font-size: .82rem; font-weight: 650; }
@@ -126,6 +111,7 @@ h2 { margin: 0; font-size: 1rem; }
 .progress-disclosure summary { min-height: 50px; padding: 15px 2px; cursor: pointer; font-weight: 650; }
 .disclosure-content { display: grid; gap: 12px; padding: 4px 0 18px; }
 .progress-card { min-height: 190px; }
+.progress-card.is-empty { min-height: 0; }
 .progress-card canvas { width: 100%; max-height: 220px; }
 .progress-card p { margin: 4px 0; color: var(--muted); font-size: .84rem; }
 .body-stats-form { display: grid; gap: 12px; }

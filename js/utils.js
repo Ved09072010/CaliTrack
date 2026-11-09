@@ -1,6 +1,5 @@
 // Return today's date in local time as YYYY-MM-DD.
-export function todayString() {
-  const now = new Date();
+export function todayString(now = new Date()) {
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
@@ -8,8 +7,7 @@ export function todayString() {
   return `${year}-${month}-${day}`;
 }
 
-export function currentTimeString() {
-  const now = new Date();
+export function currentTimeString(now = new Date()) {
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 }
 
