@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { save } from "../js/storage.js";
 import { readList } from "./data.js";
+import Habits from "./Habits.jsx";
 import Progress from "./Progress.jsx";
 import SummaryCards from "./SummaryCards.jsx";
 import Workouts from "./Workouts.jsx";
@@ -110,12 +111,7 @@ function App() {
         </section>
 
         <section id="panel-habits" className="tab-panel" role="tabpanel" aria-labelledby="tab-habits" tabIndex="-1" hidden={activeTab !== "habits"}>
-          <div className="page-heading">
-            <p className="eyebrow">DAILY ROUTINE</p>
-            <h1>Habits</h1>
-            <p className="intro">Small daily actions make training feel natural.</p>
-          </div>
-          <EmptyCard icon="✓" title="Make room for good habits">Your daily checklist and streaks will live here.</EmptyCard>
+          <Habits />
         </section>
 
         <section id="panel-diet" className="tab-panel" role="tabpanel" aria-labelledby="tab-diet" tabIndex="-1" hidden={activeTab !== "diet"}>

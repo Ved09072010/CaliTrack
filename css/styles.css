@@ -48,6 +48,30 @@ h2 { margin: 0; font-size: 1rem; }
 .empty-card h2 { font-size: 1.08rem; }
 .empty-card p { max-width: 34ch; margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.5; }
 
+.habit-add-form, .habit-rename-form { display: grid; gap: 10px; align-items: end; margin-bottom: 20px; }
+.habit-add-form .primary-button, .habit-rename-form button { min-height: 46px; }
+.habit-rename-form { grid-template-columns: minmax(0, 1fr) auto auto; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.habit-list { display: grid; gap: 12px; margin-top: 24px; }
+.habit-list > h2 { margin-bottom: 2px; }
+.habit-card { padding: 14px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); }
+.habit-card-top { display: flex; align-items: center; gap: 10px; }
+.habit-check { display: grid; width: 42px; height: 42px; flex: 0 0 42px; place-items: center; border: 2px solid var(--line); border-radius: 13px; background: var(--page); color: var(--accent-ink); cursor: pointer; font-size: 1.2rem; font-weight: 800; }
+.habit-check.is-done { border-color: var(--accent); background: var(--accent); }
+.habit-title { min-width: 0; flex: 1; }
+.habit-title h2 { overflow-wrap: anywhere; }
+.habit-title span, .habit-history-label { color: var(--muted); font-size: .76rem; }
+.habit-actions { display: flex; gap: 2px; }
+.habit-actions .text-button { padding: 4px; font-size: .76rem; }
+.habit-history { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 9px 8px; margin-top: 15px; }
+.habit-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.habit-grid-30 { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+.habit-day { aspect-ratio: 1; border-radius: 4px; background: var(--soft); }
+.habit-day.is-done { background: var(--accent); }
+.archived-habits { margin-top: 24px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.archived-habits summary { min-height: 50px; padding: 15px 2px; cursor: pointer; font-weight: 650; }
+.archived-habit { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
+.archived-habit span { flex: 1; }
+
 .workout-start { display: grid; gap: 10px; }
 .primary-button, .secondary-button { min-height: 46px; padding: 10px 16px; border: 0; border-radius: 10px; cursor: pointer; font-weight: 700; }
 .primary-button { background: var(--accent); color: var(--accent-ink); }

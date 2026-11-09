@@ -35,3 +35,12 @@
 - Run locally with `npm run dev`; log workouts and body weight to view the charts.
 - Concepts: dates, array filtering, chart datasets, and derived statistics.
 - Try logging another workout and compare its progress chart.
+
+## Phase 5: Habit tracker
+
+- Added habits with daily check-off buttons and streak counts.
+- Added 7-day and 30-day completion grids, plus rename, archive, restore, and delete actions.
+- Habit names and daily checks are saved with the shared storage helpers.
+- Run `npm run dev`; add a habit, check it off, refresh, then edit or archive it.
+- Concepts: React state, arrays, date loops, conditional rendering, and local storage.
+- Try changing the completion grid from 30 days to 14 days.

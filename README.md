@@ -12,6 +12,8 @@ Workout and body-weight records stay in this browser's local storage.
 - Edit and delete saved workouts.
 - Weekly workout, rep, and streak summaries; exercise records and progress charts.
 - Body-weight logging and a weight-trend chart.
+- Habits with daily check-offs, streaks, and 7-day/30-day completion grids.
+- Habit rename, archive/restore, and permanent delete.
 
 ## Run locally
 
@@ -42,7 +44,7 @@ GitHub Pages. For a local check first, run `npm run preview`.
 - [x] Phase 2: Storage layer
 - [x] Phase 3: Workout logger
 - [x] Phase 4: Progress tracking and charts
-- [ ] Phase 5: Habit tracker
+- [x] Phase 5: Habit tracker
 - [ ] Phase 6: Diet tracker
 - [ ] Phase 7: Exercise library and progressions
 - [ ] Phase 8: Workout programs and timers
