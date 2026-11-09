@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { save } from "../js/storage.js";
 import { readList } from "./data.js";
+import Dashboard from "./Dashboard.jsx";
 import Diet from "./Diet.jsx";
 import Habits from "./Habits.jsx";
 import Library from "./Library.jsx";
 import Programs from "./Programs.jsx";
 import Progress from "./Progress.jsx";
-import SummaryCards from "./SummaryCards.jsx";
 import Workouts from "./Workouts.jsx";
 
 const TABS = [
@@ -85,36 +85,13 @@ function App() {
     <div className="app-shell">
       <main id="main-content">
         <section id="panel-home" className="tab-panel" role="tabpanel" aria-labelledby="tab-home" tabIndex="-1" hidden={activeTab !== "home"}>
-          <div className="page-heading">
-            <p className="eyebrow">YOUR TRAINING SPACE <span className="live-dot" aria-hidden="true" /></p>
-            <h1>Move with purpose.</h1>
-            <p className="intro">Every rep is a step forward. Make today count.</p>
-          </div>
-          <section className="home-hero">
-            <div className="hero-copy">
-              <span className="hero-kicker">READY WHEN YOU ARE</span>
-              <h2>Build strength<br />one session at a time.</h2>
-              <p>Your next step starts with showing up.</p>
-              <button className="hero-button" type="button" onClick={openWorkout}>
-                <span>Start a workout</span><span aria-hidden="true">→</span>
-              </button>
-            </div>
-            <div className="hero-mark" aria-hidden="true">
-              <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="44" /><path d="M37 62h46M60 39v46" /><circle cx="60" cy="60" r="56" /></svg>
-            </div>
-          </section>
-          <section className="home-section">
-            <div className="home-section-title">
-              <div><p className="eyebrow">KEEP YOUR MOMENTUM</p><h2>This week</h2></div>
-              <button type="button" className="quiet-link" onClick={() => chooseTab("workouts")}>See workouts</button>
-            </div>
-            <SummaryCards workouts={workoutData.workouts} />
-          </section>
-          <button className="library-prompt" type="button" onClick={() => chooseTab("library")}>
-            <span className="library-icon" aria-hidden="true">↗</span>
-            <span><strong>Need an idea?</strong><small>Explore the exercise library</small></span>
-            <span className="prompt-arrow" aria-hidden="true">›</span>
-          </button>
+          <Dashboard
+            workouts={workoutData.workouts}
+            workoutError={workoutData.error}
+            active={activeTab === "home"}
+            onWorkout={openWorkout}
+            onTab={chooseTab}
+          />
         </section>
 
         <section id="panel-workouts" className="tab-panel" role="tabpanel" aria-labelledby="tab-workouts" tabIndex="-1" hidden={activeTab !== "workouts"}>

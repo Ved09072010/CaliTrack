@@ -23,6 +23,8 @@ Your records stay in this browser's local storage.
 - Beginner, intermediate, and skill routines; starting one opens the logger with the first exercise preselected.
 - Custom routines saved on-device, with one-tap logging for each planned movement.
 - Rest, countdown, hold, and EMOM timers with pause/resume controls.
+- Home dashboard with today's workout, habit, meal, and hydration totals plus workout streaks, lifetime workouts, and monthly PRs.
+- Quick actions to log workouts, check habits, log meals, browse exercises, or open programs.
 
 ## Run locally
 
@@ -57,7 +59,7 @@ GitHub Pages. For a local check first, run `npm run preview`.
 - [x] Phase 6: Diet tracker
 - [x] Phase 7: Exercise library and progressions
 - [x] Phase 8: Workout programs and timers
-- [ ] Phase 9: Home dashboard
+- [x] Phase 9: Home dashboard
 - [ ] Phase 10: Settings, backup, and polish
 - [ ] Phase 11: PWA and offline
 - [ ] Phase 12: Testing and deployment

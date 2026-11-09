@@ -73,3 +73,13 @@
 - Run `npm run dev`; start a routine, save a custom routine, and try each timer mode.
 - Concepts: reusable components, state, effects, timestamps, and saved arrays.
 - Try adding another built-in routine to `BUILT_IN_ROUTINES` in `data/programs.js`.
+
+## Phase 9: Home dashboard
+
+- Replaced the static landing view with a daily overview of workouts, habits, nutrition, and water.
+- Added lifetime workout totals, best workout streak, and personal records set this month.
+- Added quick actions to open the related tracker or start a workout.
+- Dashboard summaries refresh when you return to Home and read data through the shared storage module.
+- Run `npm run dev`; log a habit, meal, and workout, then return Home to see the totals update.
+- Concepts: derived values, array filtering/reducing, and refreshing data when a view becomes active.
+- Try adding another quick action in `src/Dashboard.jsx`.
