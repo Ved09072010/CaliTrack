@@ -1,3 +1,5 @@
+import "./workouts.js";
+
 const tabs = document.querySelectorAll(".nav-tab");
 const panels = document.querySelectorAll(".tab-panel");
 

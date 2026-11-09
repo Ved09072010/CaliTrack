@@ -29,10 +29,56 @@
         <section id="workouts-panel" class="tab-panel" role="tabpanel" aria-labelledby="tab-workouts" hidden>
           <p class="eyebrow">TRAINING</p>
           <h1>Workouts</h1>
-          <div class="card empty-card">
-            <h2>Your workout log is coming soon</h2>
-            <p>In a future phase, you will be able to record exercises, sets, reps, and notes here.</p>
-          </div>
+          <form id="workout-form" class="card workout-form" novalidate>
+            <label class="field">
+              <span>Date</span>
+              <input id="workout-date" name="date" type="date" required>
+            </label>
+            <label class="field">
+              <span>Exercise</span>
+              <select id="workout-exercise" name="exercise" required>
+                <option value="">Choose an exercise</option>
+                <option>Push-up</option>
+                <option>Pull-up</option>
+                <option>Bodyweight squat</option>
+                <option>Plank</option>
+                <option>Dead hang</option>
+                <option>Glute bridge</option>
+                <option>Dips</option>
+                <option>Handstand practice</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Set type</span>
+              <select id="set-mode" name="mode">
+                <option value="reps">Reps</option>
+                <option value="hold">Hold (seconds)</option>
+              </select>
+            </label>
+            <div class="set-heading">
+              <h2>Sets</h2>
+              <button id="add-set" class="text-button" type="button">+ Add set</button>
+            </div>
+            <div id="set-list" class="set-list"></div>
+            <label class="field">
+              <span>Notes <span class="muted">(optional)</span></span>
+              <textarea id="workout-notes" name="notes" rows="2" maxlength="500" placeholder="How did it feel?"></textarea>
+            </label>
+            <p id="workout-message" class="form-message" role="status" aria-live="polite" hidden></p>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">Save workout</button>
+              <button id="cancel-edit" class="secondary-button" type="button" hidden>Cancel edit</button>
+            </div>
+          </form>
+
+          <section class="workout-section" aria-labelledby="recent-title">
+            <h2 id="recent-title">Recent exercises</h2>
+            <div id="recent-exercises" class="recent-exercises"></div>
+          </section>
+          <section class="workout-section" aria-labelledby="history-title">
+            <h2 id="history-title">Workout history</h2>
+            <div id="workout-history" class="workout-history"></div>
+          </section>
         </section>
 
         <section id="habits-panel" class="tab-panel" role="tabpanel" aria-labelledby="tab-habits" hidden>

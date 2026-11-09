@@ -6,8 +6,10 @@ phases with plain HTML, CSS, and JavaScript.
 ## What works now
 
 - Five-tab navigation: Home, Workouts, Habits, Diet, and Library.
-- Responsive layout with automatic light and dark themes.
+- Responsive neutral theme with automatic light and dark modes.
 - Browser-only data storage helpers and date utilities.
+- Workout logger with reps or hold seconds, notes, recent exercises, and grouped history.
+- Edit and delete saved workouts.
 
 ## Run locally
 
@@ -34,7 +36,7 @@ show the published URL on that page.
 
 - [x] Phase 1: Setup and foundations
 - [x] Phase 2: Storage layer
-- [ ] Phase 3: Workout logger
+- [x] Phase 3: Workout logger
 - [ ] Phase 4: Progress tracking and charts
 - [ ] Phase 5: Habit tracker
 - [ ] Phase 6: Diet tracker
