@@ -3,37 +3,71 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#111511">
+    <meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
     <meta name="description" content="A simple, free calisthenics progress tracker.">
     <title>CaliTrack</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
     <script type="module" src="js/app.js"></script>
   </head>
   <body>
     <div class="app-shell">
-        <main id="main-content">
+      <main id="main-content">
         <section id="home-panel" class="tab-panel" role="tabpanel" aria-labelledby="tab-home">
-          <p class="eyebrow">YOUR TRAINING SPACE</p>
-          <h1>Strength takes practice.</h1>
-          <p class="intro">A calm place to learn skills and keep track of your progress.</p>
-          <div class="card welcome-card">
-            <span class="card-icon" aria-hidden="true">01</span>
-            <div>
-              <h2>Small steps. Strong habits.</h2>
-              <p>Your training space is ready. Start wherever you are.</p>
-            </div>
+          <div class="page-heading">
+            <p class="eyebrow">YOUR TRAINING SPACE <span class="live-dot" aria-hidden="true"></span></p>
+            <h1>Move with purpose.</h1>
+            <p class="intro">Every rep is a step forward. Make today count.</p>
           </div>
-          <p class="phase-note">This is the starting point. Your personal data will stay on this device.</p>
+          <section class="home-hero">
+            <div class="hero-copy">
+              <span class="hero-kicker">READY WHEN YOU ARE</span>
+              <h2>Build strength<br>one session at a time.</h2>
+              <p>Your next step starts with showing up.</p>
+              <button class="hero-button" type="button" data-open-workout>
+                <span>Start a workout</span><span aria-hidden="true">→</span>
+              </button>
+            </div>
+            <div class="hero-mark" aria-hidden="true">
+              <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="44"/><path d="M37 62h46M60 39v46"/><circle cx="60" cy="60" r="56"/></svg>
+            </div>
+          </section>
+          <section class="home-section">
+            <div class="home-section-title">
+              <div><p class="eyebrow">KEEP YOUR MOMENTUM</p><h2>This week</h2></div>
+              <button type="button" class="quiet-link" data-open-tab="workouts">See workouts</button>
+            </div>
+            <div id="home-weekly-summary" class="summary-grid"></div>
+          </section>
+          <button class="library-prompt" type="button" data-open-tab="library">
+            <span class="library-icon" aria-hidden="true">↗</span>
+            <span><strong>Need an idea?</strong><small>Explore the exercise library</small></span>
+            <span class="prompt-arrow" aria-hidden="true">›</span>
+          </button>
         </section>
 
         <section id="workouts-panel" class="tab-panel" role="tabpanel" aria-labelledby="tab-workouts" hidden>
-          <p class="eyebrow">TRAINING</p>
-          <h1>Workouts</h1>
-          <form id="workout-form" class="card workout-form" novalidate>
-            <label class="field">
-              <span>Date</span>
-              <input id="workout-date" name="date" type="date" required>
-            </label>
+          <div class="page-heading">
+            <p class="eyebrow">TRAINING</p>
+            <h1>Workouts</h1>
+            <p class="intro">Log a session, then check in on your progress.</p>
+          </div>
+          <div class="workout-start">
+            <button id="show-workout-form" class="primary-button log-workout-button" type="button">+ Log workout</button>
+            <p id="workout-feedback" class="form-message" role="status" aria-live="polite" hidden></p>
+            <div id="recent-exercises" class="recent-exercises" aria-label="Recent exercises" hidden></div>
+          </div>
+          <section class="workout-section" aria-labelledby="weekly-title">
+            <h2 id="weekly-title">Your week</h2>
+            <div id="weekly-summary" class="summary-grid"></div>
+          </section>
+          <dialog id="workout-dialog" class="workout-dialog">
+          <form id="workout-form" class="workout-form" novalidate>
+            <div class="workout-form-heading">
+              <h2>Log a workout</h2>
+              <button id="cancel-edit" class="close-button" type="button" aria-label="Close workout form">×</button>
+            </div>
             <label class="field">
               <span>Exercise</span>
               <select id="workout-exercise" name="exercise" required>
@@ -48,13 +82,23 @@
                 <option>Handstand practice</option>
               </select>
             </label>
-            <label class="field">
-              <span>Set type</span>
-              <select id="set-mode" name="mode">
-                <option value="reps">Reps</option>
-                <option value="hold">Hold (seconds)</option>
-              </select>
-            </label>
+            <div class="date-time-fields">
+              <label class="field">
+                <span>Date</span>
+                <input id="workout-date" name="date" type="date" required>
+              </label>
+              <label class="field">
+                <span>Time</span>
+                <input id="workout-time" name="time" type="time">
+              </label>
+            </div>
+            <div class="mode-control">
+              <span class="control-label" id="mode-label">Track by</span>
+              <div id="set-mode" class="segmented-control" role="group" aria-labelledby="mode-label">
+                <button type="button" class="mode-button is-selected" data-mode="reps" aria-pressed="true">Reps</button>
+                <button type="button" class="mode-button" data-mode="hold" aria-pressed="false">Hold time</button>
+              </div>
+            </div>
             <div class="set-heading">
               <h2>Sets</h2>
               <button id="add-set" class="text-button" type="button">+ Add set</button>
@@ -67,44 +111,86 @@
             <p id="workout-message" class="form-message" role="status" aria-live="polite" hidden></p>
             <div class="form-actions">
               <button class="primary-button" type="submit">Save workout</button>
-              <button id="cancel-edit" class="secondary-button" type="button" hidden>Cancel edit</button>
             </div>
           </form>
+          </dialog>
 
-          <section class="workout-section" aria-labelledby="recent-title">
-            <h2 id="recent-title">Recent exercises</h2>
-            <div id="recent-exercises" class="recent-exercises"></div>
-          </section>
           <section class="workout-section" aria-labelledby="history-title">
             <h2 id="history-title">Workout history</h2>
             <div id="workout-history" class="workout-history"></div>
           </section>
+          <details class="progress-disclosure">
+            <summary>Exercise progress</summary>
+            <div class="disclosure-content">
+              <label class="field">
+                <span>Exercise</span>
+                <select id="progress-exercise" aria-label="Choose an exercise to see progress"></select>
+              </label>
+              <div class="progress-card">
+                <canvas id="exercise-chart" role="img" aria-label="Exercise performance chart"></canvas>
+                <p id="exercise-chart-message" class="muted">Log workouts to see progress here.</p>
+              </div>
+            </div>
+          </details>
+          <details class="progress-disclosure">
+            <summary>Body weight</summary>
+            <div class="disclosure-content">
+              <form id="body-stats-form" class="body-stats-form" novalidate>
+                <label class="field">
+                  <span>Date</span>
+                  <input id="body-date" type="date" required>
+                </label>
+                <label class="field">
+                  <span>Weight (kg)</span>
+                  <input id="body-weight" type="number" min="0.1" step="0.1" inputmode="decimal" placeholder="e.g. 65.5" required>
+                </label>
+                <button class="primary-button" type="submit">Save weight</button>
+                <p id="body-stats-message" class="form-message" role="status" aria-live="polite" hidden></p>
+              </form>
+              <div class="progress-card">
+                <canvas id="body-weight-chart" role="img" aria-label="Body weight history chart"></canvas>
+                <p id="body-weight-chart-message" class="muted">Log body weight to see your trend.</p>
+              </div>
+            </div>
+          </details>
         </section>
 
         <section id="habits-panel" class="tab-panel" role="tabpanel" aria-labelledby="tab-habits" hidden>
-          <p class="eyebrow">DAILY ROUTINE</p>
-          <h1>Habits</h1>
-          <div class="card empty-card">
-            <h2>Your habit checklist is coming soon</h2>
-            <p>Build a simple daily routine and celebrate the days you show up.</p>
+          <div class="page-heading">
+            <p class="eyebrow">DAILY ROUTINE</p>
+            <h1>Habits</h1>
+            <p class="intro">Small daily actions make training feel natural.</p>
+          </div>
+          <div class="empty-card">
+            <span class="empty-icon" aria-hidden="true">✓</span>
+            <h2>Make room for good habits</h2>
+            <p>Your daily checklist and streaks will live here.</p>
           </div>
         </section>
 
         <section id="diet-panel" class="tab-panel" role="tabpanel" aria-labelledby="tab-diet" hidden>
-          <p class="eyebrow">FUEL & RECOVERY</p>
-          <h1>Diet</h1>
-          <div class="card empty-card">
-            <h2>Your food and water log is coming soon</h2>
-            <p>Track meals, nutrition, and water with quick, manual entries.</p>
+          <div class="page-heading">
+            <p class="eyebrow">FUEL & RECOVERY</p>
+            <h1>Nutrition</h1>
+            <p class="intro">Support your training with steady, simple choices.</p>
+          </div>
+          <div class="empty-card">
+            <span class="empty-icon" aria-hidden="true">◒</span>
+            <h2>Keep your fuel in view</h2>
+            <p>Meals, hydration, and daily goals will be tracked here.</p>
           </div>
         </section>
 
         <section id="library-panel" class="tab-panel" role="tabpanel" aria-labelledby="tab-library" hidden>
-          <p class="eyebrow">LEARN THE MOVEMENTS</p>
-          <h1>Library</h1>
-          <div class="card empty-card">
-            <h2>Your exercise guides are coming soon</h2>
-            <p>Browse clear exercise cues and build skills one progression at a time.</p>
+          <div class="page-heading">
+            <p class="eyebrow">LEARN THE MOVEMENTS</p>
+            <h1>Exercise library</h1>
+            <p class="intro">Find a variation that matches where you are today.</p>
+          </div>
+          <div class="empty-card">
+            <span class="empty-icon" aria-hidden="true">↗</span>
+            <h2>Learn each movement</h2>
+            <p>Exercise guides and skill progressions will appear here.</p>
           </div>
         </section>
       </main>
@@ -126,6 +212,7 @@
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 1 4 17.5zM4 17.5A2.5 2.5 0 0 1 6.5 15H20M8 7h8m-8 4h8"/></svg><span>Library</span>
         </button>
       </nav>
+
     </div>
   </body>
 </html>

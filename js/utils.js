@@ -8,6 +8,11 @@ export function todayString() {
   return `${year}-${month}-${day}`;
 }
 
+export function currentTimeString() {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+}
+
 export function createId() {
   return crypto.randomUUID();
 }

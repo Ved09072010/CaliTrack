@@ -17,3 +17,12 @@
 - Run locally with `py -m http.server 8000`; add a workout, refresh, edit it, and delete it.
 - Concepts: arrays, objects, form events, input validation, and creating page elements.
 - Try adding another exercise to the exercise dropdown in `index.html`.
+
+## Phase 4: Progress tracking
+
+- Added weekly workout, rep, and streak totals plus new-record badges.
+- Added per-exercise performance charts and a saved body-weight trend.
+- Workout date and local time are filled in automatically and shown in history.
+- Run locally with `py -m http.server 8000`; log workouts and body weight to view the charts.
+- Concepts: dates, array filtering, chart datasets, and derived statistics.
+- Try logging another workout and compare its progress chart.

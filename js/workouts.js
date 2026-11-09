@@ -1,18 +1,26 @@
 import { load, save } from "./storage.js";
-import { createId, formatDate, todayString } from "./utils.js";
+import { createId, currentTimeString, formatDate, todayString } from "./utils.js";
 
 const form = document.querySelector("#workout-form");
 const dateInput = document.querySelector("#workout-date");
+const timeInput = document.querySelector("#workout-time");
 const exerciseInput = document.querySelector("#workout-exercise");
 const modeInput = document.querySelector("#set-mode");
 const setList = document.querySelector("#set-list");
 const message = document.querySelector("#workout-message");
 const submitButton = form.querySelector('[type="submit"]');
 const cancelButton = document.querySelector("#cancel-edit");
+const openFormButton = document.querySelector("#show-workout-form");
+const workoutDialog = document.querySelector("#workout-dialog");
+const feedback = document.querySelector("#workout-feedback");
 let workouts = [];
 let editingId = null;
+let setMode = "reps";
 
 function showMessage(text, isError = false) {
+  feedback.textContent = text;
+  feedback.classList.toggle("is-error", isError);
+  feedback.hidden = text === "";
   message.textContent = text;
   message.classList.toggle("is-error", isError);
   message.setAttribute("role", isError ? "alert" : "status");
@@ -31,6 +39,7 @@ function makeInput(labelText, name, value, min, step) {
   input.step = String(step);
   input.value = value;
   input.inputMode = step === 1 ? "numeric" : "decimal";
+  input.setAttribute("aria-label", labelText);
   label.append(caption, input);
   return { label, input };
 }
@@ -40,6 +49,9 @@ function addSet(set = { reps: "", seconds: "", weight: "" }) {
   row.className = "set-row";
   row.dataset.setRow = "";
 
+  const number = document.createElement("span");
+  number.className = "set-number";
+  number.setAttribute("aria-hidden", "true");
   const reps = makeInput("Reps", "reps", set.reps, 1, 1);
   const seconds = makeInput("Seconds", "seconds", set.seconds, 1, 1);
   const weight = makeInput("Weight kg", "weight", set.weight || "", 0.01, 0.01);
@@ -48,41 +60,47 @@ function addSet(set = { reps: "", seconds: "", weight: "" }) {
   const remove = document.createElement("button");
   remove.className = "remove-set";
   remove.type = "button";
-  remove.textContent = "Remove";
+  remove.textContent = "×";
   remove.setAttribute("aria-label", `Remove set ${setList.children.length + 1}`);
   remove.addEventListener("click", () => {
     row.remove();
     updateSetRows();
   });
 
-  row.append(reps.label, seconds.label, weight.label, remove);
+  row.append(number, reps.label, seconds.label, weight.label, remove);
   setList.append(row);
   updateSetRows();
 }
 
 function updateSetRows() {
-  const isHold = modeInput.value === "hold";
+  const isHold = setMode === "hold";
   const rows = [...setList.querySelectorAll("[data-set-row]")];
 
   rows.forEach((row, index) => {
     const reps = row.querySelector('[name="reps"]');
     const seconds = row.querySelector('[name="seconds"]');
     const remove = row.querySelector(".remove-set");
+    row.querySelector(".set-number").textContent = String(index + 1).padStart(2, "0");
     reps.closest("label").hidden = isHold;
     seconds.closest("label").hidden = !isHold;
     reps.required = !isHold;
     seconds.required = isHold;
     remove.disabled = rows.length === 1;
     remove.setAttribute("aria-label", `Remove set ${index + 1}`);
+    reps.setAttribute("aria-label", `Set ${index + 1} reps`);
+    seconds.setAttribute("aria-label", `Set ${index + 1} hold seconds`);
+    row.querySelector('[name="weight"]').setAttribute("aria-label", `Set ${index + 1} weight in kilograms`);
   });
 }
 
 function resetForm() {
   form.reset();
   dateInput.value = todayString();
+  timeInput.value = currentTimeString();
   editingId = null;
+  setMode = "reps";
+  updateModeButtons();
   submitButton.textContent = "Save workout";
-  cancelButton.hidden = true;
   setList.replaceChildren();
   addSet();
   showMessage("");
@@ -97,28 +115,45 @@ function formatSet(set, mode) {
 function renderRecent() {
   const container = document.querySelector("#recent-exercises");
   container.replaceChildren();
-  const recent = [...new Set([...workouts].reverse().sort((a, b) => b.date.localeCompare(a.date)).map((item) => item.exercise))].slice(0, 5);
+  const recent = [...new Set([...workouts].reverse().map((item) => item.exercise))].slice(0, 5);
 
   if (recent.length === 0) {
-    const hint = document.createElement("p");
-    hint.className = "muted";
-    hint.textContent = "Your recent choices will appear here.";
-    container.append(hint);
+    container.hidden = true;
     return;
   }
 
+  container.hidden = false;
+  const label = document.createElement("span");
+  label.className = "recent-label";
+  label.textContent = "Recent";
+  container.append(label);
   recent.forEach((exercise) => {
     const button = document.createElement("button");
     button.className = "recent-button";
     button.type = "button";
     button.textContent = exercise;
     button.addEventListener("click", () => {
+      openWorkoutForm();
       exerciseInput.value = exercise;
       exerciseInput.focus();
-      form.scrollIntoView({ block: "start" });
     });
     container.append(button);
   });
+}
+
+function openWorkoutForm() {
+  feedback.hidden = true;
+  if (!editingId) {
+    dateInput.value = todayString();
+    timeInput.value = currentTimeString();
+  }
+  if (!workoutDialog.open) workoutDialog.showModal();
+  exerciseInput.focus();
+}
+
+function closeWorkoutForm() {
+  if (workoutDialog.open) workoutDialog.close();
+  editingId = null;
 }
 
 function renderHistory() {
@@ -141,6 +176,22 @@ function renderHistory() {
     return;
   }
 
+  const recordIds = new Set();
+  const bestByExercise = new Map();
+  [...workouts]
+    .map((workout, index) => ({ workout, index }))
+    .sort((a, b) => a.workout.date.localeCompare(b.workout.date) || a.index - b.index)
+    .forEach(({ workout }) => {
+      const isHold = workout.sets.some((set) => set.seconds > 0);
+      const mode = isHold ? "hold" : "reps";
+      const score = Math.max(...workout.sets.map((set) => isHold ? set.seconds : set.reps));
+      const key = `${workout.exercise}:${mode}`;
+      if (score > (bestByExercise.get(key) || 0)) {
+        recordIds.add(workout.id);
+        bestByExercise.set(key, score);
+      }
+    });
+
   dates.forEach((date) => {
     const group = document.createElement("section");
     group.className = "history-group";
@@ -154,9 +205,16 @@ function renderHistory() {
       const content = document.createElement("div");
       const title = document.createElement("h4");
       title.textContent = workout.exercise;
+      if (recordIds.has(workout.id)) {
+        const badge = document.createElement("span");
+        badge.className = "pr-badge";
+        badge.textContent = "New PR";
+        title.append(" ", badge);
+      }
       const details = document.createElement("p");
       const mode = workout.sets.some((set) => set.seconds > 0) ? "hold" : "reps";
-      details.textContent = workout.sets.map((set) => formatSet(set, mode)).join("  ·  ");
+      const time = workout.time ? `${workout.time}  ·  ` : "";
+      details.textContent = `${time}${workout.sets.map((set) => formatSet(set, mode)).join("  ·  ")}`;
       content.append(title, details);
 
       if (workout.notes) {
@@ -193,24 +251,33 @@ function render() {
 }
 
 function editWorkout(workout) {
+  openWorkoutForm();
   editingId = workout.id;
   dateInput.value = workout.date;
+  timeInput.value = workout.time || "";
   exerciseInput.value = workout.exercise;
-  modeInput.value = workout.sets.some((set) => set.seconds > 0) ? "hold" : "reps";
+  setMode = workout.sets.some((set) => set.seconds > 0) ? "hold" : "reps";
+  updateModeButtons();
   document.querySelector("#workout-notes").value = workout.notes || "";
   setList.replaceChildren();
   workout.sets.forEach((set) => addSet(set));
   submitButton.textContent = "Update workout";
-  cancelButton.hidden = false;
   showMessage("");
-  form.scrollIntoView({ block: "start" });
-  exerciseInput.focus();
+}
+
+function updateModeButtons() {
+  modeInput.querySelectorAll("[data-mode]").forEach((button) => {
+    const selected = button.dataset.mode === setMode;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
 }
 
 function persist(nextWorkouts) {
   save("workoutLog", nextWorkouts);
   workouts = nextWorkouts;
   render();
+  window.dispatchEvent(new Event("workouts-updated"));
 }
 
 function deleteWorkout(workout) {
@@ -236,7 +303,7 @@ form.addEventListener("submit", (event) => {
     return;
   }
 
-  const isHold = modeInput.value === "hold";
+  const isHold = setMode === "hold";
   const setRows = [...setList.querySelectorAll("[data-set-row]")];
   const sets = [];
 
@@ -264,6 +331,7 @@ form.addEventListener("submit", (event) => {
   const entry = {
     id: editingId || createId(),
     date: dateInput.value,
+    time: timeInput.value,
     exercise: exerciseInput.value,
     sets,
     notes: document.querySelector("#workout-notes").value.trim(),
@@ -276,6 +344,7 @@ form.addEventListener("submit", (event) => {
   try {
     persist(nextWorkouts);
     resetForm();
+    closeWorkoutForm();
     showMessage(wasEditing ? "Workout updated." : "Workout saved.");
   } catch (error) {
     showMessage(error.message, true);
@@ -283,10 +352,25 @@ form.addEventListener("submit", (event) => {
 });
 
 document.querySelector("#add-set").addEventListener("click", () => addSet());
-modeInput.addEventListener("change", updateSetRows);
-cancelButton.addEventListener("click", resetForm);
+openFormButton.addEventListener("click", openWorkoutForm);
+modeInput.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-mode]");
+  if (!button) return;
+  setMode = button.dataset.mode;
+  updateModeButtons();
+  updateSetRows();
+});
+cancelButton.addEventListener("click", () => {
+  resetForm();
+  closeWorkoutForm();
+});
+workoutDialog.addEventListener("cancel", () => {
+  resetForm();
+  closeWorkoutForm();
+});
 
 dateInput.value = todayString();
+timeInput.value = currentTimeString();
 addSet();
 try {
   workouts = load("workoutLog", []);

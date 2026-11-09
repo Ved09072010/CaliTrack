@@ -1,4 +1,5 @@
 import "./workouts.js";
+import { renderProgress } from "./progress.js";
 
 const tabs = document.querySelectorAll(".nav-tab");
 const panels = document.querySelectorAll(".tab-panel");
@@ -16,7 +17,21 @@ function showTab(tab) {
   panels.forEach((panel) => {
     panel.hidden = panel.id !== `${selectedTab}-panel`;
   });
+  if (selectedTab === "workouts") renderProgress();
 }
+
+document.querySelectorAll("[data-open-tab], [data-open-workout]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const targetName = button.dataset.openTab || "workouts";
+    const target = document.querySelector(`[data-tab="${targetName}"]`);
+    if (target) {
+      showTab(target);
+      if (button.hasAttribute("data-open-workout")) {
+        document.querySelector("#show-workout-form").click();
+      }
+    }
+  });
+});
 
 tabs.forEach((tab, index) => {
   tab.addEventListener("click", () => showTab(tab));
@@ -35,4 +50,7 @@ tabs.forEach((tab, index) => {
     tabs[nextIndex].focus();
     showTab(tabs[nextIndex]);
   });
+
 });
+
+renderProgress();
