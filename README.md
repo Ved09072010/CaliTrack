@@ -5,8 +5,8 @@ Your records stay in this browser's local storage.
 
 ## What works now
 
-- Five-tab navigation: Home, Workouts, Habits, Diet, and Library.
-- Responsive dark slate-and-cobalt theme with five-tab navigation.
+- Six-tab navigation: Home, Workouts, Habits, Diet, Library, and Programs.
+- Responsive dark slate-and-cobalt theme with mobile-friendly navigation.
 - React UI, with all saved data accessed through the shared storage module.
 - Workout logger automatically records the date and time, with reps or hold seconds, notes, recent exercises, and grouped history.
 - Edit and delete saved workouts.
@@ -20,6 +20,9 @@ Your records stay in this browser's local storage.
 - Searchable exercise library with 35+ movement guides, form cues, and free YouTube tutorial search links.
 - Push, pull, legs, core, and skills filters with gradual progressions and unlock suggestions.
 - Log an exercise directly from its guide into the workout form.
+- Beginner, intermediate, and skill routines; starting one opens the logger with the first exercise preselected.
+- Custom routines saved on-device, with one-tap logging for each planned movement.
+- Rest, countdown, hold, and EMOM timers with pause/resume controls.
 
 ## Run locally
 
@@ -53,7 +56,7 @@ GitHub Pages. For a local check first, run `npm run preview`.
 - [x] Phase 5: Habit tracker
 - [x] Phase 6: Diet tracker
 - [x] Phase 7: Exercise library and progressions
-- [ ] Phase 8: Workout programs and timers
+- [x] Phase 8: Workout programs and timers
 - [ ] Phase 9: Home dashboard
 - [ ] Phase 10: Settings, backup, and polish
 - [ ] Phase 11: PWA and offline

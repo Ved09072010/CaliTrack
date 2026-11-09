@@ -4,6 +4,24 @@ import { EXERCISES } from "./data.js";
 
 const newSet = () => ({ reps: "", seconds: "", weight: "" });
 const emptyForm = () => ({ exercise: "", mode: "reps", sets: [newSet()], notes: "" });
+const HOLD_EXERCISES = new Set([
+  "Dead hang",
+  "Hollow hold",
+  "Plank",
+  "Planche lean",
+  "Side plank",
+  "Tuck front lever hold",
+  "Tuck L-sit",
+  "Wall handstand hold",
+]);
+
+function formForExercise(exercise) {
+  return {
+    ...emptyForm(),
+    exercise,
+    mode: HOLD_EXERCISES.has(exercise) ? "hold" : "reps",
+  };
+}
 
 function getInitialForm() {
   return emptyForm();
@@ -66,7 +84,7 @@ function WorkoutDialog({ isOpen, onClose, workouts, onSave, onMessage, editingWo
   useEffect(() => {
     if (editingWorkout || !initialExercise) return;
     setEditing(null);
-    setForm({ ...emptyForm(), exercise: initialExercise });
+    setForm(formForExercise(initialExercise));
   }, [editingWorkout, initialExercise]);
 
   function close() {
@@ -217,7 +235,15 @@ function NumberField({ label, value, min, step, placeholder, onChange }) {
   );
 }
 
-export default function Workouts({ workouts, storageError, onSave, openRequest, initialExercise = "" }) {
+export default function Workouts({
+  workouts,
+  storageError,
+  onSave,
+  openRequest,
+  initialExercise = "",
+  activeRoutine = null,
+  onLogRoutineExercise,
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [selectedEdit, setSelectedEdit] = useState(null);
@@ -241,6 +267,7 @@ export default function Workouts({ workouts, storageError, onSave, openRequest, 
   function finishClose() {
     setIsOpen(false);
     setSelectedEdit(null);
+    setQuickExercise("");
   }
 
   function saveWorkouts(nextWorkouts) {
@@ -278,6 +305,22 @@ export default function Workouts({ workouts, storageError, onSave, openRequest, 
           </div>
         )}
       </div>
+      {activeRoutine && (
+        <section className="active-routine" aria-labelledby="active-routine-title">
+          <div>
+            <span className="routine-level">TODAY'S ROUTINE · {activeRoutine.level}</span>
+            <h2 id="active-routine-title">{activeRoutine.name}</h2>
+          </div>
+          <ol className="active-routine-list">
+            {activeRoutine.exercises.map((exercise, index) => (
+              <li key={`${activeRoutine.id}-${exercise.name}-${index}`}>
+                <span><strong>{index + 1}. {exercise.name}</strong><small>{exercise.target}</small></span>
+                <button className="text-button" type="button" disabled={Boolean(storageError)} onClick={() => onLogRoutineExercise(exercise.name)}>Log</button>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
       <section className="workout-section" aria-labelledby="history-title">
         <h2 id="history-title">Workout history</h2>
         <div className="workout-history">

@@ -4,6 +4,7 @@ import { readList } from "./data.js";
 import Diet from "./Diet.jsx";
 import Habits from "./Habits.jsx";
 import Library from "./Library.jsx";
+import Programs from "./Programs.jsx";
 import Progress from "./Progress.jsx";
 import SummaryCards from "./SummaryCards.jsx";
 import Workouts from "./Workouts.jsx";
@@ -14,6 +15,7 @@ const TABS = [
   { id: "habits", label: "Habits", icon: <><path d="m5 12 4 4L19 6" /><circle cx="12" cy="12" r="10" /></> },
   { id: "diet", label: "Diet", icon: <path d="M12 3s7 7.2 7 12a7 7 0 0 1-14 0c0-4.8 7-12 7-12z" /> },
   { id: "library", label: "Library", icon: <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 1 4 17.5zM4 17.5A2.5 2.5 0 0 1 6.5 15H20M8 7h8m-8 4h8" /> },
+  { id: "programs", label: "Programs", icon: <path d="M4 5h16M4 12h16M4 19h16M8 3v4m8 3v4m-5 3v4" /> },
 ];
 
 function initialWorkoutData() {
@@ -29,6 +31,7 @@ function App() {
   const [workoutData, setWorkoutData] = useState(initialWorkoutData);
   const [workoutRequest, setWorkoutRequest] = useState(0);
   const [requestedExercise, setRequestedExercise] = useState("");
+  const [activeRoutine, setActiveRoutine] = useState(null);
 
   function persistWorkouts(nextWorkouts) {
     save("workoutLog", nextWorkouts);
@@ -36,14 +39,28 @@ function App() {
   }
 
   function openWorkout() {
+    setActiveRoutine(null);
     setRequestedExercise("");
     setActiveTab("workouts");
     setWorkoutRequest((request) => request + 1);
   }
 
   function logLibraryExercise(exercise) {
+    setActiveRoutine(null);
     setRequestedExercise(exercise);
     setActiveTab("workouts");
+    setWorkoutRequest((request) => request + 1);
+  }
+
+  function startRoutine(routine) {
+    setActiveRoutine(routine);
+    setRequestedExercise(routine.exercises[0]?.name || "");
+    setActiveTab("workouts");
+    setWorkoutRequest((request) => request + 1);
+  }
+
+  function logRoutineExercise(exercise) {
+    setRequestedExercise(exercise);
     setWorkoutRequest((request) => request + 1);
   }
 
@@ -107,6 +124,8 @@ function App() {
             onSave={persistWorkouts}
             openRequest={workoutRequest}
             initialExercise={requestedExercise}
+            activeRoutine={activeRoutine}
+            onLogRoutineExercise={logRoutineExercise}
           />
           <Progress workouts={workoutData.workouts} />
         </section>
@@ -121,6 +140,10 @@ function App() {
 
         <section id="panel-library" className="tab-panel" role="tabpanel" aria-labelledby="tab-library" tabIndex="-1" hidden={activeTab !== "library"}>
           <Library onLogExercise={logLibraryExercise} />
+        </section>
+
+        <section id="panel-programs" className="tab-panel" role="tabpanel" aria-labelledby="tab-programs" tabIndex="-1" hidden={activeTab !== "programs"}>
+          <Programs onStartRoutine={startRoutine} />
         </section>
       </main>
 

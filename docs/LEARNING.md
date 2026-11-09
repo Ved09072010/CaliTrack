@@ -63,3 +63,13 @@
 - Run `npm run dev`; search, filter, open a guide, and use its Log button.
 - Concepts: arrays of objects, filtering, reusable components, and passing callbacks as props.
 - Try adding an exercise to `data/exercises.js` and include it in a progression.
+
+## Phase 8: Programs and timers
+
+- Added original beginner, intermediate, and skill routines with suggested sets and holds.
+- Starting a routine opens the workout form with its first exercise selected; the full routine stays available for quick logging.
+- Added a custom routine builder that saves to the shared storage module.
+- Added rest, countdown, hold, and EMOM timers with pause, resume, and reset controls.
+- Run `npm run dev`; start a routine, save a custom routine, and try each timer mode.
+- Concepts: reusable components, state, effects, timestamps, and saved arrays.
+- Try adding another built-in routine to `BUILT_IN_ROUTINES` in `data/programs.js`.
