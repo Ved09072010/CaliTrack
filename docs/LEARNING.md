@@ -53,3 +53,13 @@
 - Run `npm run dev`; log a meal, save it as a favorite, adjust water, then refresh.
 - Concepts: form validation, array totals, reusable components, and Chart.js datasets.
 - Try changing the default daily water goal in `src/Diet.jsx`.
+
+## Phase 7: Exercise library
+
+- Added 35 original exercise guides with steps, muscles, difficulty, cues, and common mistakes.
+- Added search and category filters for push, pull, legs, core, and skills.
+- Added strength progressions with unlock suggestions and links to free YouTube tutorial searches.
+- A guide's Log button opens the workout form with that exercise selected.
+- Run `npm run dev`; search, filter, open a guide, and use its Log button.
+- Concepts: arrays of objects, filtering, reusable components, and passing callbacks as props.
+- Try adding an exercise to `data/exercises.js` and include it in a progression.

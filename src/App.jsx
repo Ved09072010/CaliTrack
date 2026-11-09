@@ -3,6 +3,7 @@ import { save } from "../js/storage.js";
 import { readList } from "./data.js";
 import Diet from "./Diet.jsx";
 import Habits from "./Habits.jsx";
+import Library from "./Library.jsx";
 import Progress from "./Progress.jsx";
 import SummaryCards from "./SummaryCards.jsx";
 import Workouts from "./Workouts.jsx";
@@ -23,20 +24,11 @@ function initialWorkoutData() {
   }
 }
 
-function EmptyCard({ icon, title, children }) {
-  return (
-    <div className="empty-card">
-      <span className="empty-icon" aria-hidden="true">{icon}</span>
-      <h2>{title}</h2>
-      <p>{children}</p>
-    </div>
-  );
-}
-
 function App() {
   const [activeTab, setActiveTab] = useState("home");
   const [workoutData, setWorkoutData] = useState(initialWorkoutData);
   const [workoutRequest, setWorkoutRequest] = useState(0);
+  const [requestedExercise, setRequestedExercise] = useState("");
 
   function persistWorkouts(nextWorkouts) {
     save("workoutLog", nextWorkouts);
@@ -44,6 +36,13 @@ function App() {
   }
 
   function openWorkout() {
+    setRequestedExercise("");
+    setActiveTab("workouts");
+    setWorkoutRequest((request) => request + 1);
+  }
+
+  function logLibraryExercise(exercise) {
+    setRequestedExercise(exercise);
     setActiveTab("workouts");
     setWorkoutRequest((request) => request + 1);
   }
@@ -107,6 +106,7 @@ function App() {
             storageError={workoutData.error}
             onSave={persistWorkouts}
             openRequest={workoutRequest}
+            initialExercise={requestedExercise}
           />
           <Progress workouts={workoutData.workouts} />
         </section>
@@ -120,12 +120,7 @@ function App() {
         </section>
 
         <section id="panel-library" className="tab-panel" role="tabpanel" aria-labelledby="tab-library" tabIndex="-1" hidden={activeTab !== "library"}>
-          <div className="page-heading">
-            <p className="eyebrow">LEARN THE MOVEMENTS</p>
-            <h1>Exercise library</h1>
-            <p className="intro">Find a variation that matches where you are today.</p>
-          </div>
-          <EmptyCard icon="↗" title="Learn each movement">Exercise guides and skill progressions will appear here.</EmptyCard>
+          <Library onLogExercise={logLibraryExercise} />
         </section>
       </main>
 

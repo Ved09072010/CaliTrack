@@ -217,7 +217,7 @@ function NumberField({ label, value, min, step, placeholder, onChange }) {
   );
 }
 
-export default function Workouts({ workouts, storageError, onSave, openRequest }) {
+export default function Workouts({ workouts, storageError, onSave, openRequest, initialExercise = "" }) {
   const [isOpen, setIsOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [selectedEdit, setSelectedEdit] = useState(null);
@@ -228,10 +228,10 @@ export default function Workouts({ workouts, storageError, onSave, openRequest }
   useEffect(() => {
     if (openRequest > 0) {
       setSelectedEdit(null);
-      setQuickExercise("");
+      setQuickExercise(initialExercise);
       setIsOpen(true);
     }
-  }, [openRequest]);
+  }, [initialExercise, openRequest]);
 
   function edit(workout) {
     setSelectedEdit(workout);

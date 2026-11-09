@@ -48,6 +48,31 @@ h2 { margin: 0; font-size: 1rem; }
 .empty-card h2 { font-size: 1.08rem; }
 .empty-card p { max-width: 34ch; margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.5; }
 
+.library-search { display: grid; gap: 12px; }
+.library-filters { display: flex; flex-wrap: wrap; gap: 7px; }
+.library-filters .is-selected { border-color: var(--accent); background: var(--soft); color: var(--accent); }
+.library-result-count { margin: 18px 0 8px; color: var(--muted); font-size: .8rem; }
+.exercise-list { display: grid; gap: 10px; }
+.exercise-card { padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.exercise-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.exercise-category { color: var(--accent); font-size: .72rem; font-weight: 700; }
+.exercise-card h2 { margin-top: 3px; font-size: 1rem; }
+.exercise-muscles { margin: 6px 0 10px; color: var(--muted); font-size: .8rem; }
+.exercise-card details, .progression-path { border-top: 1px solid var(--line); }
+.exercise-card summary, .progression-path summary { min-height: 42px; padding: 12px 0; cursor: pointer; font-size: .84rem; font-weight: 650; }
+.exercise-details { padding: 0 0 5px; font-size: .82rem; line-height: 1.5; }
+.exercise-details h3 { margin: 12px 0 5px; font-size: .84rem; }
+.exercise-details ol, .exercise-details ul { display: grid; gap: 5px; margin: 6px 0; padding-left: 21px; color: var(--muted); }
+.exercise-details p { color: var(--muted); }
+.exercise-details a { display: inline-block; min-height: 42px; padding: 10px 0; color: var(--accent); font-weight: 650; }
+.library-progressions { display: grid; gap: 10px; margin-top: 30px; }
+.library-progressions > p { margin: -4px 0 4px; font-size: .82rem; }
+.progression-path ol { display: grid; gap: 8px; margin: 0; padding: 0 0 12px 22px; }
+.progression-path li { padding-left: 2px; color: var(--muted); font-size: .8rem; }
+.progression-path li > div { display: grid; gap: 3px; }
+.progression-path li strong { color: var(--text); font-size: .85rem; }
+.progression-path li .text-button { min-height: 36px; }
+
 .habit-add-form, .habit-rename-form { display: grid; gap: 10px; align-items: end; margin-bottom: 20px; }
 .habit-add-form .primary-button, .habit-rename-form button { min-height: 46px; }
 .habit-rename-form { grid-template-columns: minmax(0, 1fr) auto auto; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }

@@ -17,6 +17,9 @@ Your records stay in this browser's local storage.
 - Meal logging with calories and macros, saved food favorites, and meal history.
 - Daily calorie, protein, and water goals with progress bars and one-tap water logging.
 - Weekly calories and protein chart.
+- Searchable exercise library with 35+ movement guides, form cues, and free YouTube tutorial search links.
+- Push, pull, legs, core, and skills filters with gradual progressions and unlock suggestions.
+- Log an exercise directly from its guide into the workout form.
 
 ## Run locally
 
@@ -49,7 +52,7 @@ GitHub Pages. For a local check first, run `npm run preview`.
 - [x] Phase 4: Progress tracking and charts
 - [x] Phase 5: Habit tracker
 - [x] Phase 6: Diet tracker
-- [ ] Phase 7: Exercise library and progressions
+- [x] Phase 7: Exercise library and progressions
 - [ ] Phase 8: Workout programs and timers
 - [ ] Phase 9: Home dashboard
 - [ ] Phase 10: Settings, backup, and polish

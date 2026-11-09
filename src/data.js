@@ -1,16 +1,12 @@
 import { formatDate, todayString } from "../js/utils.js";
 import { load } from "../js/storage.js";
+import { EXERCISES as EXERCISE_GUIDES } from "../data/exercises.js";
 
-export const EXERCISES = [
-  "Push-up",
-  "Pull-up",
-  "Bodyweight squat",
-  "Plank",
-  "Dead hang",
-  "Glute bridge",
+export const EXERCISES = [...new Set([
+  ...EXERCISE_GUIDES.map((exercise) => exercise.name),
   "Dips",
   "Handstand practice",
-];
+])];
 
 export function readList(key) {
   const value = load(key, []);
