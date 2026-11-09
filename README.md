@@ -61,8 +61,14 @@ The new cache replaces the old one when the updated service worker activates.
 
 ## Publish with GitHub Pages
 
-Build the site with `npm run build`, then publish the contents of `dist` using
-GitHub Pages. For a local check first, run `npm run preview`.
+The included GitHub Actions workflow builds `dist` and deploys it to GitHub Pages
+when a commit is pushed to `main`. In the repository's **Settings → Pages**,
+choose **GitHub Actions** as the build and deployment source once. Then push your
+commit and wait for the **Deploy CaliTrack to GitHub Pages** workflow to finish.
+For a local production check, run `npm run build` followed by `npm run preview`.
+
+See [docs/TESTING.md](docs/TESTING.md) for the manual feature checklist, test
+results, Lighthouse status, and current deployment status.
 
 ## Build progress
 
@@ -77,7 +83,7 @@ GitHub Pages. For a local check first, run `npm run preview`.
 - [x] Phase 9: Home dashboard
 - [x] Phase 10: Settings, backup, and polish
 - [x] Phase 11: PWA and offline
-- [ ] Phase 12: Testing and deployment
+- [ ] Phase 12: Testing and deployment (Pages deployment awaits push)
 
 ## Data stays on this device
 

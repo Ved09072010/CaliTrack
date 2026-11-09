@@ -102,4 +102,14 @@
 - An offline notice explains that saved records remain on this device.
 - Run `npm run build` and `npm run preview`; open the preview once online, then use browser DevTools to test offline navigation and refresh.
 - Concepts: web app manifests, service workers, cache strategies, and browser online/offline events.
-- Try changing the icon in `icons/calitrack.svg`, then increment `CACHE_VERSION` in `public/service-worker.js` when shipping the update.
+- Try changing the icon in `public/icons/calitrack.svg`, then increment `CACHE_VERSION` in `public/service-worker.js` when shipping the update.
+
+## Phase 12: Testing and deployment
+
+- Added a manual test checklist for app navigation, all trackers, settings, backups, accessibility, and offline behavior in `docs/TESTING.md`.
+- Added a GitHub Actions workflow that builds the production site and publishes `dist` to GitHub Pages on pushes to `main`.
+- Browser smoke checks and the production build passed; test data was restored after the checks. A clean dependency reinstall hit an OS `EPERM` unlink error in `node_modules`.
+- Lighthouse scores were not collected, and the current public Pages URL returned 404. The first published deployment still needs a push and the repository Pages source set to GitHub Actions.
+- Run `npm ci`, `npm run build`, and `npm run preview`; for release verification, check the Actions run, test the deployed HTTPS URL, then run Lighthouse in Chrome DevTools.
+- Concepts: manual acceptance testing, CI workflows, GitHub Pages artifacts, and release gates.
+- Try adding one regression test to the checklist for a bug you encounter.
