@@ -1,7 +1,7 @@
 # CaliTrack
 
 A free, mobile-first calisthenics tracker built with React, Vite, and plain CSS.
-Workout and body-weight records stay in this browser's local storage.
+Your records stay in this browser's local storage.
 
 ## What works now
 
@@ -14,6 +14,9 @@ Workout and body-weight records stay in this browser's local storage.
 - Body-weight logging and a weight-trend chart.
 - Habits with daily check-offs, streaks, and 7-day/30-day completion grids.
 - Habit rename, archive/restore, and permanent delete.
+- Meal logging with calories and macros, saved food favorites, and meal history.
+- Daily calorie, protein, and water goals with progress bars and one-tap water logging.
+- Weekly calories and protein chart.
 
 ## Run locally
 
@@ -45,7 +48,7 @@ GitHub Pages. For a local check first, run `npm run preview`.
 - [x] Phase 3: Workout logger
 - [x] Phase 4: Progress tracking and charts
 - [x] Phase 5: Habit tracker
-- [ ] Phase 6: Diet tracker
+- [x] Phase 6: Diet tracker
 - [ ] Phase 7: Exercise library and progressions
 - [ ] Phase 8: Workout programs and timers
 - [ ] Phase 9: Home dashboard
@@ -55,5 +58,5 @@ GitHub Pages. For a local check first, run `npm run preview`.
 
 ## Data stays on this device
 
-Saved workouts live in this browser's local storage. Clearing the browser's site
-data will remove them. Do not use private browsing if you want records to persist.
+Saved app data lives in this browser's local storage. Clearing the browser's site
+data will remove it. Do not use private browsing if you want records to persist.

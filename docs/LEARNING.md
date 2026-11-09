@@ -44,3 +44,12 @@
 - Run `npm run dev`; add a habit, check it off, refresh, then edit or archive it.
 - Concepts: React state, arrays, date loops, conditional rendering, and local storage.
 - Try changing the completion grid from 30 days to 14 days.
+
+## Phase 6: Diet tracker
+
+- Added meal and macro logging, quick-add favorites, and a saved meal history.
+- Added daily calorie, protein, and water totals, editable goals, and water buttons.
+- Added a weekly calories-and-protein chart; all records use the shared storage module.
+- Run `npm run dev`; log a meal, save it as a favorite, adjust water, then refresh.
+- Concepts: form validation, array totals, reusable components, and Chart.js datasets.
+- Try changing the default daily water goal in `src/Diet.jsx`.

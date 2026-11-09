@@ -72,6 +72,32 @@ h2 { margin: 0; font-size: 1rem; }
 .archived-habit { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
 .archived-habit span { flex: 1; }
 
+.diet-section { display: grid; gap: 12px; margin: 22px 0; }
+.diet-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.diet-section-heading > span { color: var(--muted); font-size: .78rem; }
+.diet-section-heading > strong, .diet-progress strong { font-size: .84rem; font-variant-numeric: tabular-nums; }
+.diet-progress { display: grid; gap: 7px; }
+.diet-progress > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: .82rem; }
+.diet-section progress { width: 100%; height: 10px; accent-color: var(--accent); }
+.diet-macros { display: flex; gap: 20px; color: var(--muted); font-size: .82rem; }
+.diet-macros strong { margin-left: 4px; color: var(--text); }
+.water-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 9px; }
+.diet-favorites { display: flex; flex-wrap: wrap; gap: 8px; }
+.diet-favorites .recent-button { display: grid; text-align: left; }
+.diet-favorites small { color: var(--muted); font-size: .72rem; }
+.diet-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.diet-form .diet-name, .diet-favorite-check, .diet-submit { grid-column: 1 / -1; }
+.diet-favorite-check { display: flex; align-items: center; gap: 8px; min-height: 40px; font-size: .86rem; }
+.diet-favorite-check input { width: 20px; height: 20px; accent-color: var(--accent); }
+.diet-history { display: grid; }
+.diet-meal { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+.diet-meal h3 { margin: 0 0 4px; font-size: .94rem; }
+.diet-meal p { margin: 3px 0 0; color: var(--muted); font-size: .78rem; }
+.diet-meal .text-button { flex: 0 0 auto; }
+.diet-history + .empty-card { margin-top: 0; }
+.diet-goals { padding: 12px 0 18px; }
+.diet-goals .primary-button { width: 100%; }
+
 .workout-start { display: grid; gap: 10px; }
 .primary-button, .secondary-button { min-height: 46px; padding: 10px 16px; border: 0; border-radius: 10px; cursor: pointer; font-weight: 700; }
 .primary-button { background: var(--accent); color: var(--accent-ink); }
