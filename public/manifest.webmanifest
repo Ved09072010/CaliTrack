@@ -1,0 +1,19 @@
+{
+  "name": "CaliTrack",
+  "short_name": "CaliTrack",
+  "description": "A free, offline-friendly calisthenics progress tracker.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "./icons/calitrack.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

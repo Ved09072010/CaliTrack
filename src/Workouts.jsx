@@ -192,6 +192,12 @@ function WorkoutDialog({ isOpen, onClose, workouts, onSave, onMessage, editingWo
           <h2>Sets</h2>
           <button className="text-button" type="button" onClick={() => setForm((current) => ({ ...current, sets: [...current.sets, newSet()] }))}>+ Add set</button>
         </div>
+        <div className="set-column-labels" aria-hidden="true">
+          <span />
+          <span>{form.mode === "hold" ? "Hold (sec)" : "Reps"}</span>
+          <span>Weight ({units === "imperial" ? "lb" : "kg"})</span>
+          <span />
+        </div>
         <div className="set-list">
           {form.sets.map((set, index) => (
             <div className="set-row" key={index}>

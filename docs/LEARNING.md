@@ -93,3 +93,13 @@
 - Run `npm run dev`; change theme and units, export a backup, restore it, then test reset with disposable data.
 - Concepts: validating JSON, object/array mapping, file input, downloads, and batch storage updates.
 - Try adding another preference to `DEFAULT_SETTINGS` in `src/settingsData.js`.
+
+## Phase 11: PWA and offline
+
+- Added a web app manifest and a CaliTrack SVG app icon for installable browsers.
+- Added a versioned service worker that caches the app shell and same-origin assets.
+- The worker also tries to cache Chart.js; charts can be unavailable offline if it was not cached, but tracking still works.
+- An offline notice explains that saved records remain on this device.
+- Run `npm run build` and `npm run preview`; open the preview once online, then use browser DevTools to test offline navigation and refresh.
+- Concepts: web app manifests, service workers, cache strategies, and browser online/offline events.
+- Try changing the icon in `icons/calitrack.svg`, then increment `CACHE_VERSION` in `public/service-worker.js` when shipping the update.

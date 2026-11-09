@@ -40,6 +40,7 @@ function initialSettings() {
 
 function App() {
   const [activeTab, setActiveTab] = useState("home");
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [workoutData, setWorkoutData] = useState(initialWorkoutData);
   const [settingsData, setSettingsData] = useState(initialSettings);
   const [dataVersion, setDataVersion] = useState(0);
@@ -49,7 +50,19 @@ function App() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = settingsData.settings.theme;
+    document.querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", settingsData.settings.theme === "light" ? "#f8fafc" : "#111827");
   }, [settingsData.settings.theme]);
+
+  useEffect(() => {
+    const updateConnection = () => setIsOnline(navigator.onLine);
+    window.addEventListener("online", updateConnection);
+    window.addEventListener("offline", updateConnection);
+    return () => {
+      window.removeEventListener("online", updateConnection);
+      window.removeEventListener("offline", updateConnection);
+    };
+  }, []);
 
   function persistWorkouts(nextWorkouts) {
     save("workoutLog", nextWorkouts);
@@ -121,6 +134,7 @@ function App() {
   return (
     <div className="app-shell" data-theme={settingsData.settings.theme}>
       <main id="main-content">
+        {!isOnline && <p className="offline-notice" role="status">Offline mode · Your saved data stays on this device.</p>}
         <section id="panel-home" className="tab-panel" role="tabpanel" aria-labelledby="tab-home" tabIndex="-1" hidden={activeTab !== "home"}>
           <Dashboard
             key={`dashboard-${dataVersion}`}
@@ -144,7 +158,12 @@ function App() {
             onLogRoutineExercise={logRoutineExercise}
             units={settingsData.settings.units}
           />
-          <Progress key={`progress-${dataVersion}`} workouts={workoutData.workouts} units={settingsData.settings.units} />
+          <Progress
+            key={`progress-${dataVersion}`}
+            workouts={workoutData.workouts}
+            units={settingsData.settings.units}
+            theme={settingsData.settings.theme}
+          />
         </section>
 
         <section id="panel-habits" className="tab-panel" role="tabpanel" aria-labelledby="tab-habits" tabIndex="-1" hidden={activeTab !== "habits"}>

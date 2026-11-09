@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createId, formatDate, todayString } from "../js/utils.js";
 import { load, save } from "../js/storage.js";
+import { getChartTheme } from "./chartTheme.js";
 
 const DEFAULT_GOALS = { calorieGoal: 2000, proteinGoal: 100, waterGoal: 2000 };
 const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner", "Snack"];
@@ -59,7 +60,7 @@ function dateAgo(daysAgo) {
   return todayString(date);
 }
 
-function WeeklyNutritionChart({ meals }) {
+function WeeklyNutritionChart({ meals, theme }) {
   const [expanded, setExpanded] = useState(false);
   const canvasRef = useRef(null);
   const chartData = useMemo(() => {
@@ -80,29 +81,30 @@ function WeeklyNutritionChart({ meals }) {
 
   useEffect(() => {
     if (!expanded || !window.Chart || !canvasRef.current) return undefined;
+    const colors = getChartTheme(theme);
     const chart = new window.Chart(canvasRef.current, {
       type: "bar",
       data: {
         labels: chartData.labels,
         datasets: [
-          { label: "Calories", data: chartData.calories, backgroundColor: "#4b8be8", yAxisID: "y" },
-          { label: "Protein (g)", data: chartData.protein, backgroundColor: "#8b9bb3", yAxisID: "y1" },
+          { label: "Calories", data: chartData.calories, backgroundColor: colors.accent, yAxisID: "y" },
+          { label: "Protein (g)", data: chartData.protein, backgroundColor: colors.secondary, yAxisID: "y1" },
         ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        color: "#a3afbf",
+        color: colors.muted,
         scales: {
-          y: { beginAtZero: true, ticks: { color: "#a3afbf" }, grid: { color: "#364357" } },
-          y1: { beginAtZero: true, position: "right", grid: { drawOnChartArea: false } },
-          x: { ticks: { color: "#a3afbf" }, grid: { color: "#364357" } },
+          y: { beginAtZero: true, ticks: { color: colors.muted }, grid: { color: colors.grid } },
+          y1: { beginAtZero: true, position: "right", ticks: { color: colors.muted }, grid: { drawOnChartArea: false } },
+          x: { ticks: { color: colors.muted }, grid: { color: colors.grid } },
         },
-        plugins: { legend: { labels: { color: "#f1f5f9" } } },
+        plugins: { legend: { labels: { color: colors.text } } },
       },
     });
     return () => chart.destroy();
-  }, [chartData, expanded]);
+  }, [chartData, expanded, theme]);
 
   return (
     <details className="progress-disclosure" onToggle={(event) => setExpanded(event.currentTarget.open)}>
@@ -123,6 +125,7 @@ export default function Diet({ settings: appSettings, onSettingsChange }) {
   const [goals, setGoals] = useState(appSettings || data.settings);
   const [message, setMessage] = useState("");
   const settings = appSettings || data.settings;
+  const theme = appSettings?.theme || "dark";
   const today = todayString();
   const todaysMeals = data.meals.filter((meal) => meal.date === today);
   const totals = getFoodTotals(todaysMeals);
@@ -323,7 +326,7 @@ export default function Diet({ settings: appSettings, onSettingsChange }) {
               <button className="primary-button" type="submit">Save goals</button>
             </form>
           </details>
-          <WeeklyNutritionChart meals={weeklyMeals} />
+          <WeeklyNutritionChart meals={weeklyMeals} theme={theme} />
         </>
       )}
     </>

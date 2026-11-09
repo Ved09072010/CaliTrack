@@ -3,6 +3,7 @@ import { save } from "../js/storage.js";
 import { formatDate, readList } from "./data.js";
 import { todayString } from "../js/utils.js";
 import { fromKilograms, toKilograms } from "./settingsData.js";
+import { getChartTheme } from "./chartTheme.js";
 import SummaryCards from "./SummaryCards.jsx";
 
 function initialBodyData() {
@@ -13,20 +14,21 @@ function initialBodyData() {
   }
 }
 
-function chartOptions() {
+function chartOptions(theme) {
+  const colors = getChartTheme(theme);
   return {
     responsive: true,
     maintainAspectRatio: false,
-    color: "#a3afbf",
+    color: colors.muted,
     scales: {
-      y: { beginAtZero: true, ticks: { color: "#a3afbf" }, grid: { color: "#364357" } },
-      x: { ticks: { color: "#a3afbf" }, grid: { color: "#364357" } },
+      y: { beginAtZero: true, ticks: { color: colors.muted }, grid: { color: colors.grid } },
+      x: { ticks: { color: colors.muted }, grid: { color: colors.grid } },
     },
-    plugins: { legend: { labels: { color: "#f1f5f9" } } },
+    plugins: { legend: { labels: { color: colors.text } } },
   };
 }
 
-function ExerciseProgress({ workouts, units }) {
+function ExerciseProgress({ workouts, units, theme }) {
   const [expanded, setExpanded] = useState(false);
   const [selected, setSelected] = useState("");
   const canvasRef = useRef(null);
@@ -50,6 +52,7 @@ function ExerciseProgress({ workouts, units }) {
 
     const dates = [...points.keys()];
     const values = [...points.values()];
+    const colors = getChartTheme(theme);
     const chart = new window.Chart(canvasRef.current, {
       type: "line",
       data: {
@@ -58,28 +61,28 @@ function ExerciseProgress({ workouts, units }) {
           {
             label: isHold ? "Best hold (sec)" : "Best reps",
             data: values.map((point) => point.best),
-            borderColor: "#4b8be8",
-            backgroundColor: "#4b8be8",
+            borderColor: colors.accent,
+            backgroundColor: colors.accent,
           },
           ...(!isHold ? [{
             label: `Volume (reps × ${units === "imperial" ? "lb" : "kg"})`,
             data: values.map((point) => point.volume * (units === "imperial" ? 1 / 0.45359237 : 1)),
-            borderColor: "#8b9bb3",
-            backgroundColor: "#8b9bb3",
+            borderColor: colors.secondary,
+            backgroundColor: colors.secondary,
             yAxisID: "y1",
           }] : []),
         ],
       },
       options: {
-        ...chartOptions(),
+        ...chartOptions(theme),
         scales: {
-          ...chartOptions().scales,
+          ...chartOptions(theme).scales,
           y1: { beginAtZero: true, position: "right", grid: { drawOnChartArea: false } },
         },
       },
     });
     return () => chart.destroy();
-  }, [expanded, records, isHold, units]);
+  }, [expanded, records, isHold, units, theme]);
 
   const chartAvailable = Boolean(window.Chart);
   return (
@@ -101,7 +104,7 @@ function ExerciseProgress({ workouts, units }) {
   );
 }
 
-function BodyWeightProgress({ units }) {
+function BodyWeightProgress({ units, theme }) {
   const [bodyData, setBodyData] = useState(initialBodyData);
   const [date, setDate] = useState(todayString());
   const [weight, setWeight] = useState("");
@@ -114,6 +117,7 @@ function BodyWeightProgress({ units }) {
 
   useEffect(() => {
     if (!expanded || !sortedStats.length || !window.Chart || !canvasRef.current) return undefined;
+    const colors = getChartTheme(theme);
     const chart = new window.Chart(canvasRef.current, {
       type: "line",
       data: {
@@ -121,21 +125,21 @@ function BodyWeightProgress({ units }) {
         datasets: [{
           label: `Weight (${units === "imperial" ? "lb" : "kg"})`,
           data: sortedStats.map((item) => fromKilograms(item.weightKg, units)),
-          borderColor: "#4b8be8",
-          backgroundColor: "#4b8be8",
+          borderColor: colors.accent,
+          backgroundColor: colors.accent,
           tension: 0.25,
         }],
       },
       options: {
-        ...chartOptions(),
+        ...chartOptions(theme),
         scales: {
-          ...chartOptions().scales,
-          y: { beginAtZero: false, ticks: { color: "#a3afbf" }, grid: { color: "#364357" } },
+          ...chartOptions(theme).scales,
+          y: { beginAtZero: false, ticks: { color: colors.muted }, grid: { color: colors.grid } },
         },
       },
     });
     return () => chart.destroy();
-  }, [expanded, sortedStats, units]);
+  }, [expanded, sortedStats, units, theme]);
 
   function submit(event) {
     event.preventDefault();
@@ -186,15 +190,15 @@ function BodyWeightProgress({ units }) {
   );
 }
 
-export default function Progress({ workouts, units = "metric" }) {
+export default function Progress({ workouts, units = "metric", theme = "dark" }) {
   return (
     <>
       <section className="workout-section" aria-labelledby="weekly-title">
         <h2 id="weekly-title">Your week</h2>
         <SummaryCards workouts={workouts} />
       </section>
-      <ExerciseProgress workouts={workouts} units={units} />
-      <BodyWeightProgress units={units} />
+      <ExerciseProgress workouts={workouts} units={units} theme={theme} />
+      <BodyWeightProgress units={units} theme={theme} />
     </>
   );
 }

@@ -27,6 +27,7 @@ Your records stay in this browser's local storage.
 - Quick actions to log workouts, check habits, log meals, browse exercises, or open programs.
 - Settings for dark/light theme, metric/imperial display, and nutrition goals.
 - Downloadable JSON backup, validated backup restore, and a confirmed reset for all saved app data.
+- Installable PWA with cached app files for offline use and an offline status notice.
 
 ## Run locally
 
@@ -46,6 +47,18 @@ Your records stay in this browser's local storage.
 To make a production build, run `npm run build`. Vite writes the ready-to-publish
 site to the `dist` folder. Preview it locally with `npm run preview`.
 
+## Install and use offline
+
+On a supported browser, open the deployed HTTPS site and choose **Install app** or
+**Add to Home Screen**. Open it once while online so the app files can be cached.
+Workout, habit, meal, and settings data remain in this device's browser storage.
+Charts use Chart.js from a free CDN; when it has not been cached or there is no
+connection, tracking still works and chart views explain that charts are unavailable.
+
+The service worker caches the app shell and static assets. After changing shipped
+files, increment `CACHE_VERSION` in `public/service-worker.js` before deployment.
+The new cache replaces the old one when the updated service worker activates.
+
 ## Publish with GitHub Pages
 
 Build the site with `npm run build`, then publish the contents of `dist` using
@@ -63,7 +76,7 @@ GitHub Pages. For a local check first, run `npm run preview`.
 - [x] Phase 8: Workout programs and timers
 - [x] Phase 9: Home dashboard
 - [x] Phase 10: Settings, backup, and polish
-- [ ] Phase 11: PWA and offline
+- [x] Phase 11: PWA and offline
 - [ ] Phase 12: Testing and deployment
 
 ## Data stays on this device
