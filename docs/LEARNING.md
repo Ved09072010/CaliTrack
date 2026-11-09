@@ -83,3 +83,13 @@
 - Run `npm run dev`; log a habit, meal, and workout, then return Home to see the totals update.
 - Concepts: derived values, array filtering/reducing, and refreshing data when a view becomes active.
 - Try adding another quick action in `src/Dashboard.jsx`.
+
+## Phase 10: Settings and backup
+
+- Added dark/light theme, metric/imperial units, and daily goal settings.
+- Weight data stays stored in kilograms and converts for display and entry when imperial units are selected.
+- Added JSON export/import for every saved record group, with format and field validation.
+- Added a confirmed reset that clears saved records and returns settings to defaults.
+- Run `npm run dev`; change theme and units, export a backup, restore it, then test reset with disposable data.
+- Concepts: validating JSON, object/array mapping, file input, downloads, and batch storage updates.
+- Try adding another preference to `DEFAULT_SETTINGS` in `src/settingsData.js`.

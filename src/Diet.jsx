@@ -116,12 +116,13 @@ function WeeklyNutritionChart({ meals }) {
   );
 }
 
-export default function Diet() {
+export default function Diet({ settings: appSettings, onSettingsChange }) {
   const [data, setData] = useState(getInitialData);
   const [food, setFood] = useState({ name: "", mealType: "Breakfast", calories: "", protein: "", carbs: "", fat: "" });
   const [saveFavorite, setSaveFavorite] = useState(false);
-  const [goals, setGoals] = useState(data.settings);
+  const [goals, setGoals] = useState(appSettings || data.settings);
   const [message, setMessage] = useState("");
+  const settings = appSettings || data.settings;
   const today = todayString();
   const todaysMeals = data.meals.filter((meal) => meal.date === today);
   const totals = getFoodTotals(todaysMeals);
@@ -131,6 +132,10 @@ export default function Diet() {
     () => data.meals.filter((meal) => meal.date >= dateAgo(6) && meal.date <= today),
     [data.meals, today],
   );
+
+  useEffect(() => {
+    setGoals(settings);
+  }, [settings]);
 
   function addFood(event) {
     event.preventDefault();
@@ -208,13 +213,15 @@ export default function Diet() {
       return;
     }
     try {
-      const settings = { ...data.settings, ...nextGoals };
-      save("settings", settings);
-      setData((current) => ({ ...current, settings }));
+      const nextSettings = { ...settings, ...nextGoals };
+      if (onSettingsChange) onSettingsChange(nextSettings);
+      else save("settings", nextSettings);
+      setData((current) => ({ ...current, settings: nextSettings }));
       setMessage("Goals saved.");
     } catch (error) {
       setMessage(error.message);
     }
+
   }
 
   function progress(label, value, goal, unit) {
@@ -238,8 +245,8 @@ export default function Diet() {
         <>
           <section className="diet-section" aria-labelledby="diet-today-title">
             <div className="diet-section-heading"><h2 id="diet-today-title">Today's nutrition</h2><span>{formatDate(today)}</span></div>
-            {progress("Calories", totals.calories, data.settings.calorieGoal, "kcal")}
-            {progress("Protein", totals.protein, data.settings.proteinGoal, "g")}
+            {progress("Calories", totals.calories, settings.calorieGoal, "kcal")}
+            {progress("Protein", totals.protein, settings.proteinGoal, "g")}
             <div className="diet-macros">
               <span>Carbs <strong>{Math.round(totals.carbs)}g</strong></span>
               <span>Fat <strong>{Math.round(totals.fat)}g</strong></span>
@@ -247,8 +254,8 @@ export default function Diet() {
           </section>
 
           <section className="diet-section" aria-labelledby="water-title">
-            <div className="diet-section-heading"><h2 id="water-title">Water</h2><strong>{todaysWater} / {data.settings.waterGoal} ml</strong></div>
-            <progress aria-label="Water goal progress" max={data.settings.waterGoal} value={Math.min(todaysWater, data.settings.waterGoal)} />
+            <div className="diet-section-heading"><h2 id="water-title">Water</h2><strong>{todaysWater} / {settings.waterGoal} ml</strong></div>
+            <progress aria-label="Water goal progress" max={settings.waterGoal} value={Math.min(todaysWater, settings.waterGoal)} />
             <div className="water-actions">
               <button className="secondary-button" type="button" onClick={() => changeWater(-250)} disabled={todaysWater === 0}>−250 ml</button>
               <button className="primary-button" type="button" onClick={() => changeWater(250)}>+250 ml water</button>

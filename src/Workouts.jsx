@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createId, currentTimeString, formatDate, todayString } from "../js/utils.js";
+import { fromKilograms, toKilograms } from "./settingsData.js";
 import { EXERCISES } from "./data.js";
 
 const newSet = () => ({ reps: "", seconds: "", weight: "" });
@@ -27,9 +28,10 @@ function getInitialForm() {
   return emptyForm();
 }
 
-function setSummary(set, mode) {
+function setSummary(set, mode, units) {
   const amount = mode === "hold" ? `${set.seconds} sec` : `${set.reps} reps`;
-  return `${amount}${set.weight ? ` · ${set.weight} kg` : ""}`;
+  const weight = set.weight ? Number(fromKilograms(set.weight, units).toFixed(1)) : 0;
+  return `${amount}${weight ? ` · ${weight} ${units === "imperial" ? "lb" : "kg"}` : ""}`;
 }
 
 function getRecordIds(workouts) {
@@ -50,7 +52,7 @@ function getRecordIds(workouts) {
   return records;
 }
 
-function WorkoutDialog({ isOpen, onClose, workouts, onSave, onMessage, editingWorkout, initialExercise, disabled }) {
+function WorkoutDialog({ isOpen, onClose, workouts, onSave, onMessage, editingWorkout, initialExercise, disabled, units }) {
   const dialogRef = useRef(null);
   const [form, setForm] = useState(getInitialForm);
   const [editing, setEditing] = useState(null);
@@ -73,13 +75,13 @@ function WorkoutDialog({ isOpen, onClose, workouts, onSave, onMessage, editingWo
       sets: editingWorkout.sets.map((set) => ({
         reps: set.reps || "",
         seconds: set.seconds || "",
-        weight: set.weight || "",
+        weight: set.weight ? String(Number(fromKilograms(set.weight, units).toFixed(2))) : "",
       })),
       notes: editingWorkout.notes || "",
     });
     setError("");
     onMessage("");
-  }, [editingWorkout, onMessage]);
+  }, [editingWorkout, onMessage, units]);
 
   useEffect(() => {
     if (editingWorkout || !initialExercise) return;
@@ -127,7 +129,7 @@ function WorkoutDialog({ isOpen, onClose, workouts, onSave, onMessage, editingWo
         setError(`Enter a weight above zero in set ${index + 1}, or leave it blank.`);
         return;
       }
-      sets.push({ reps: isHold ? 0 : count, seconds: isHold ? count : 0, weight });
+      sets.push({ reps: isHold ? 0 : count, seconds: isHold ? count : 0, weight: toKilograms(weight, units) });
     }
 
     const now = new Date();
@@ -199,7 +201,7 @@ function WorkoutDialog({ isOpen, onClose, workouts, onSave, onMessage, editingWo
               ) : (
                 <NumberField label={`Set ${index + 1} hold seconds`} value={set.seconds} min="1" step="1" onChange={(value) => updateSet(index, "seconds", value)} />
               )}
-              <NumberField label={`Set ${index + 1} weight in kilograms`} value={set.weight} min="0.01" step="0.01" placeholder="Optional" onChange={(value) => updateSet(index, "weight", value)} />
+              <NumberField label={`Set ${index + 1} weight in ${units === "imperial" ? "pounds" : "kilograms"}`} value={set.weight} min="0.01" step="0.01" placeholder="Optional" onChange={(value) => updateSet(index, "weight", value)} />
               <button className="remove-set" type="button" aria-label={`Remove set ${index + 1}`} disabled={form.sets.length === 1} onClick={() => setForm((current) => ({ ...current, sets: current.sets.filter((_, setIndex) => setIndex !== index) }))}>×</button>
             </div>
           ))}
@@ -243,6 +245,7 @@ export default function Workouts({
   initialExercise = "",
   activeRoutine = null,
   onLogRoutineExercise,
+  units = "metric",
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -341,7 +344,7 @@ export default function Workouts({
                   <article className="card history-card" key={workout.id}>
                     <div>
                       <h4>{workout.exercise}{recordIds.has(workout.id) && <span className="pr-badge">New PR</span>}</h4>
-                      <p>{workout.time ? `${workout.time} · ` : ""}{workout.sets.map((set) => setSummary(set, mode)).join("  ·  ")}</p>
+                      <p>{workout.time ? `${workout.time} · ` : ""}{workout.sets.map((set) => setSummary(set, mode, units)).join("  ·  ")}</p>
                       {workout.notes && <p className="history-note">{workout.notes}</p>}
                     </div>
                     <div className="history-actions">
@@ -364,6 +367,7 @@ export default function Workouts({
         editingWorkout={selectedEdit}
         initialExercise={quickExercise}
         disabled={Boolean(storageError)}
+        units={units}
       />
     </>
   );

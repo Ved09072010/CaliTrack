@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { save } from "../js/storage.js";
 import { formatDate, readList } from "./data.js";
 import { todayString } from "../js/utils.js";
+import { fromKilograms, toKilograms } from "./settingsData.js";
 import SummaryCards from "./SummaryCards.jsx";
 
 function initialBodyData() {
@@ -25,7 +26,7 @@ function chartOptions() {
   };
 }
 
-function ExerciseProgress({ workouts }) {
+function ExerciseProgress({ workouts, units }) {
   const [expanded, setExpanded] = useState(false);
   const [selected, setSelected] = useState("");
   const canvasRef = useRef(null);
@@ -61,8 +62,8 @@ function ExerciseProgress({ workouts }) {
             backgroundColor: "#4b8be8",
           },
           ...(!isHold ? [{
-            label: "Volume (reps × kg)",
-            data: values.map((point) => point.volume),
+            label: `Volume (reps × ${units === "imperial" ? "lb" : "kg"})`,
+            data: values.map((point) => point.volume * (units === "imperial" ? 1 / 0.45359237 : 1)),
             borderColor: "#8b9bb3",
             backgroundColor: "#8b9bb3",
             yAxisID: "y1",
@@ -78,7 +79,7 @@ function ExerciseProgress({ workouts }) {
       },
     });
     return () => chart.destroy();
-  }, [expanded, records, isHold]);
+  }, [expanded, records, isHold, units]);
 
   const chartAvailable = Boolean(window.Chart);
   return (
@@ -100,7 +101,7 @@ function ExerciseProgress({ workouts }) {
   );
 }
 
-function BodyWeightProgress() {
+function BodyWeightProgress({ units }) {
   const [bodyData, setBodyData] = useState(initialBodyData);
   const [date, setDate] = useState(todayString());
   const [weight, setWeight] = useState("");
@@ -118,8 +119,8 @@ function BodyWeightProgress() {
       data: {
         labels: sortedStats.map((item) => formatDate(item.date)),
         datasets: [{
-          label: "Weight (kg)",
-          data: sortedStats.map((item) => item.weightKg),
+          label: `Weight (${units === "imperial" ? "lb" : "kg"})`,
+          data: sortedStats.map((item) => fromKilograms(item.weightKg, units)),
           borderColor: "#4b8be8",
           backgroundColor: "#4b8be8",
           tension: 0.25,
@@ -134,18 +135,19 @@ function BodyWeightProgress() {
       },
     });
     return () => chart.destroy();
-  }, [expanded, sortedStats]);
+  }, [expanded, sortedStats, units]);
 
   function submit(event) {
     event.preventDefault();
-    const weightKg = Number(weight);
-    if (!date || !Number.isFinite(weightKg) || weightKg <= 0) {
+    const enteredWeight = Number(weight);
+    if (!date || !Number.isFinite(enteredWeight) || enteredWeight <= 0) {
       setIsError(true);
       setMessage("Enter a date and a weight above zero.");
       return;
     }
 
     try {
+      const weightKg = toKilograms(enteredWeight, units);
       const nextStats = stats.filter((item) => item.date !== date);
       nextStats.push({ date, weightKg, notes: "" });
       save("bodyStats", nextStats);
@@ -170,8 +172,8 @@ function BodyWeightProgress() {
             <input id="body-date" type="date" required disabled={Boolean(bodyData.error)} value={date} onChange={(event) => setDate(event.target.value)} />
           </label>
           <label className="field">
-            <span>Weight (kg)</span>
-            <input id="body-weight" type="number" min="0.1" step="0.1" inputMode="decimal" placeholder="e.g. 65.5" required disabled={Boolean(bodyData.error)} value={weight} onChange={(event) => setWeight(event.target.value)} />
+            <span>Weight ({units === "imperial" ? "lb" : "kg"})</span>
+            <input id="body-weight" type="number" min="0.1" step="0.1" inputMode="decimal" placeholder={units === "imperial" ? "e.g. 145" : "e.g. 65.5"} required disabled={Boolean(bodyData.error)} value={weight} onChange={(event) => setWeight(event.target.value)} />
           </label>
           <button className="primary-button" type="submit" disabled={Boolean(bodyData.error)}>Save weight</button>
           {message && <p id="body-stats-message" className={`form-message${isError ? " is-error" : ""}`} role={isError ? "alert" : "status"}>{message}</p>}
@@ -184,15 +186,15 @@ function BodyWeightProgress() {
   );
 }
 
-export default function Progress({ workouts }) {
+export default function Progress({ workouts, units = "metric" }) {
   return (
     <>
       <section className="workout-section" aria-labelledby="weekly-title">
         <h2 id="weekly-title">Your week</h2>
         <SummaryCards workouts={workouts} />
       </section>
-      <ExerciseProgress workouts={workouts} />
-      <BodyWeightProgress />
+      <ExerciseProgress workouts={workouts} units={units} />
+      <BodyWeightProgress units={units} />
     </>
   );
 }

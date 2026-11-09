@@ -5,7 +5,7 @@ Your records stay in this browser's local storage.
 
 ## What works now
 
-- Six-tab navigation: Home, Workouts, Habits, Diet, Library, and Programs.
+- Seven-tab navigation: Home, Workouts, Habits, Diet, Library, Programs, and Settings.
 - Responsive dark slate-and-cobalt theme with mobile-friendly navigation.
 - React UI, with all saved data accessed through the shared storage module.
 - Workout logger automatically records the date and time, with reps or hold seconds, notes, recent exercises, and grouped history.
@@ -25,6 +25,8 @@ Your records stay in this browser's local storage.
 - Rest, countdown, hold, and EMOM timers with pause/resume controls.
 - Home dashboard with today's workout, habit, meal, and hydration totals plus workout streaks, lifetime workouts, and monthly PRs.
 - Quick actions to log workouts, check habits, log meals, browse exercises, or open programs.
+- Settings for dark/light theme, metric/imperial display, and nutrition goals.
+- Downloadable JSON backup, validated backup restore, and a confirmed reset for all saved app data.
 
 ## Run locally
 
@@ -60,7 +62,7 @@ GitHub Pages. For a local check first, run `npm run preview`.
 - [x] Phase 7: Exercise library and progressions
 - [x] Phase 8: Workout programs and timers
 - [x] Phase 9: Home dashboard
-- [ ] Phase 10: Settings, backup, and polish
+- [x] Phase 10: Settings, backup, and polish
 - [ ] Phase 11: PWA and offline
 - [ ] Phase 12: Testing and deployment
 

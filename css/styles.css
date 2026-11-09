@@ -12,11 +12,24 @@
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+:root[data-theme="light"] {
+  color-scheme: light;
+  --page: #f8fafc;
+  --surface: #fff;
+  --soft: #e2e8f0;
+  --text: #172033;
+  --muted: #526174;
+  --accent: #285ea8;
+  --accent-ink: #fff;
+  --line: #cbd5e1;
+}
+
 * { box-sizing: border-box; }
 body { min-width: 320px; min-height: 100vh; margin: 0; background: var(--page); color: var(--text); }
 button, input, select, textarea { font: inherit; }
 [hidden] { display: none !important; }
-.app-shell { width: min(100%, 620px); min-height: 100vh; margin: auto; padding-bottom: 100px; }
+.app-shell { width: min(100%, 620px); min-height: 100vh; margin: auto; padding-bottom: 100px; background: var(--page); color: var(--text); }
+.app-shell[data-theme="light"] { color-scheme: light; }
 main { padding: 28px 20px; }
 .page-heading { margin-bottom: 24px; }
 .eyebrow { margin: 0 0 6px; color: var(--muted); font-size: .72rem; font-weight: 700; letter-spacing: .08em; }
@@ -171,6 +184,14 @@ h2 { margin: 0; font-size: 1rem; }
 .diet-goals { padding: 12px 0 18px; }
 .diet-goals .primary-button { width: 100%; }
 
+.settings-section { display: grid; gap: 12px; margin: 24px 0; }
+.settings-form { display: grid; gap: 12px; }
+.settings-form > .primary-button { width: 100%; }
+.settings-hint, .settings-section > .muted { margin: 0; font-size: .82rem; line-height: 1.5; }
+.settings-actions { display: grid; gap: 12px; }
+.backup-file input { min-height: 46px; color: var(--muted); font-size: .78rem; }
+.settings-section .danger-button { color: #e17474; }
+
 .workout-start { display: grid; gap: 10px; }
 .primary-button, .secondary-button { min-height: 46px; padding: 10px 16px; border: 0; border-radius: 10px; cursor: pointer; font-weight: 700; }
 .primary-button { background: var(--accent); color: var(--accent-ink); }
@@ -239,10 +260,10 @@ h2 { margin: 0; font-size: 1rem; }
 .progress-card p { margin: 4px 0; color: var(--muted); font-size: .84rem; }
 .body-stats-form { display: grid; gap: 12px; }
 .body-stats-form .form-message { grid-column: 1 / -1; }
-.bottom-nav { position: fixed; z-index: 1; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); width: min(100%, 620px); margin: auto; padding: 7px 10px max(7px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--surface); }
-.nav-tab { display: flex; min-width: 0; min-height: 58px; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); cursor: pointer; font-size: .69rem; font-weight: 600; }
+.bottom-nav { position: fixed; z-index: 1; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); width: min(100%, 620px); margin: auto; padding: 7px 4px max(7px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--surface); }
+.nav-tab { display: flex; min-width: 0; min-height: 58px; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); cursor: pointer; font-size: .58rem; font-weight: 600; }
 .nav-tab.is-active { background: var(--soft); color: var(--accent); }
-.nav-tab svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.nav-tab svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 @media (min-width: 700px) {
   main { padding-top: 36px; }

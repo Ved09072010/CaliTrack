@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { save } from "../js/storage.js";
+import { useEffect, useState } from "react";
+import { load, replaceMany, save } from "../js/storage.js";
+import { normalizeSettings } from "./appData.js";
 import { readList } from "./data.js";
 import Dashboard from "./Dashboard.jsx";
 import Diet from "./Diet.jsx";
@@ -7,6 +8,8 @@ import Habits from "./Habits.jsx";
 import Library from "./Library.jsx";
 import Programs from "./Programs.jsx";
 import Progress from "./Progress.jsx";
+import Settings from "./Settings.jsx";
+import { DEFAULT_SETTINGS } from "./settingsData.js";
 import Workouts from "./Workouts.jsx";
 
 const TABS = [
@@ -16,6 +19,7 @@ const TABS = [
   { id: "diet", label: "Diet", icon: <path d="M12 3s7 7.2 7 12a7 7 0 0 1-14 0c0-4.8 7-12 7-12z" /> },
   { id: "library", label: "Library", icon: <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 1 4 17.5zM4 17.5A2.5 2.5 0 0 1 6.5 15H20M8 7h8m-8 4h8" /> },
   { id: "programs", label: "Programs", icon: <path d="M4 5h16M4 12h16M4 19h16M8 3v4m8 3v4m-5 3v4" /> },
+  { id: "settings", label: "Settings", icon: <><circle cx="12" cy="12" r="3" /><path d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 0 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 0 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 0 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9z" /></> },
 ];
 
 function initialWorkoutData() {
@@ -26,16 +30,49 @@ function initialWorkoutData() {
   }
 }
 
+function initialSettings() {
+  try {
+    return { settings: normalizeSettings(load("settings", DEFAULT_SETTINGS)), error: "" };
+  } catch (error) {
+    return { settings: DEFAULT_SETTINGS, error: error.message };
+  }
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState("home");
   const [workoutData, setWorkoutData] = useState(initialWorkoutData);
+  const [settingsData, setSettingsData] = useState(initialSettings);
+  const [dataVersion, setDataVersion] = useState(0);
   const [workoutRequest, setWorkoutRequest] = useState(0);
   const [requestedExercise, setRequestedExercise] = useState("");
   const [activeRoutine, setActiveRoutine] = useState(null);
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = settingsData.settings.theme;
+  }, [settingsData.settings.theme]);
+
   function persistWorkouts(nextWorkouts) {
     save("workoutLog", nextWorkouts);
     setWorkoutData({ workouts: nextWorkouts, error: "" });
+  }
+
+  function saveSettings(nextSettings) {
+    const settings = normalizeSettings(nextSettings);
+    save("settings", settings);
+    setSettingsData({ settings, error: "" });
+  }
+
+  function importAppData(data) {
+    replaceMany(data);
+    setSettingsData({ settings: data.settings, error: "" });
+    setWorkoutData({ workouts: data.workoutLog, error: "" });
+    setDataVersion((version) => version + 1);
+  }
+
+  function resetAppData() {
+    setSettingsData({ settings: DEFAULT_SETTINGS, error: "" });
+    setWorkoutData({ workouts: [], error: "" });
+    setDataVersion((version) => version + 1);
   }
 
   function openWorkout() {
@@ -82,10 +119,11 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-theme={settingsData.settings.theme}>
       <main id="main-content">
         <section id="panel-home" className="tab-panel" role="tabpanel" aria-labelledby="tab-home" tabIndex="-1" hidden={activeTab !== "home"}>
           <Dashboard
+            key={`dashboard-${dataVersion}`}
             workouts={workoutData.workouts}
             workoutError={workoutData.error}
             active={activeTab === "home"}
@@ -96,6 +134,7 @@ function App() {
 
         <section id="panel-workouts" className="tab-panel" role="tabpanel" aria-labelledby="tab-workouts" tabIndex="-1" hidden={activeTab !== "workouts"}>
           <Workouts
+            key={`workouts-${dataVersion}`}
             workouts={workoutData.workouts}
             storageError={workoutData.error}
             onSave={persistWorkouts}
@@ -103,16 +142,21 @@ function App() {
             initialExercise={requestedExercise}
             activeRoutine={activeRoutine}
             onLogRoutineExercise={logRoutineExercise}
+            units={settingsData.settings.units}
           />
-          <Progress workouts={workoutData.workouts} />
+          <Progress key={`progress-${dataVersion}`} workouts={workoutData.workouts} units={settingsData.settings.units} />
         </section>
 
         <section id="panel-habits" className="tab-panel" role="tabpanel" aria-labelledby="tab-habits" tabIndex="-1" hidden={activeTab !== "habits"}>
-          <Habits />
+          <Habits key={`habits-${dataVersion}`} />
         </section>
 
         <section id="panel-diet" className="tab-panel" role="tabpanel" aria-labelledby="tab-diet" tabIndex="-1" hidden={activeTab !== "diet"}>
-          <Diet />
+          <Diet
+            key={`diet-${dataVersion}`}
+            settings={settingsData.settings}
+            onSettingsChange={saveSettings}
+          />
         </section>
 
         <section id="panel-library" className="tab-panel" role="tabpanel" aria-labelledby="tab-library" tabIndex="-1" hidden={activeTab !== "library"}>
@@ -120,8 +164,19 @@ function App() {
         </section>
 
         <section id="panel-programs" className="tab-panel" role="tabpanel" aria-labelledby="tab-programs" tabIndex="-1" hidden={activeTab !== "programs"}>
-          <Programs onStartRoutine={startRoutine} />
+          <Programs key={`programs-${dataVersion}`} onStartRoutine={startRoutine} />
         </section>
+
+        <section id="panel-settings" className="tab-panel" role="tabpanel" aria-labelledby="tab-settings" tabIndex="-1" hidden={activeTab !== "settings"}>
+          <Settings
+            settings={settingsData.settings}
+            storageError={settingsData.error}
+            onSaveSettings={saveSettings}
+            onImport={importAppData}
+            onReset={resetAppData}
+          />
+        </section>
+
       </main>
 
       <nav className="bottom-nav" aria-label="Main navigation" role="tablist">
