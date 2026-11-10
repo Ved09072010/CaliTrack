@@ -59,8 +59,8 @@ that preference. The browser theme color follows the resolved palette.
 - Habits: Today and Streaks segments with a shared 12-week completion heatmap.
 - Diet: Today and Week segments with calorie/protein progress, quick water and
   favorite-food actions, and a weekly chart.
-- Library: Browse and Progressions segments; guide detail remains available on
-  demand.
+- Library: Browse and Skill tree segments. The tree has one-line branch chips
+  and a vertical, connected node list; existing progression paths live below it.
 - Settings: preference, backup, restore, export, and reset actions remain
   available from the Home gear entry.
 
@@ -72,6 +72,12 @@ that preference. The browser theme color follows the resolved palette.
 - First launch offers sample data once; either choice is remembered.
 - The Home workout ring uses the editable weekly workout goal. The displayed
   day streak is the current consecutive streak, not the lifetime best.
+- The Skill Tree has 32 nodes in five branches. A session masters a node only
+  when the required number of sets meet its reps/seconds goal; manual mastery
+  is stored separately from workouts under `skillMastery`.
+- Node state is communicated by both a shape and a short text label. Available
+  nodes use a subtle teal pulse that is removed for reduced-motion preferences.
+- The Home Stats disclosure adds only the mastered count and next skill.
 
 The storage module and record groups remain unchanged. Settings also include a
 weekly workout goal, and theme selection supports the device's system preference.

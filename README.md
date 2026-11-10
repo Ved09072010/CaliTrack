@@ -18,7 +18,9 @@ Your records stay in this browser's local storage.
 - Daily calorie, protein, and water goals with progress bars and one-tap water logging.
 - Weekly calories and protein chart.
 - Searchable exercise library with 35+ movement guides, form cues, and free YouTube tutorial search links.
-- Push, pull, legs, core, and skills filters with gradual progressions and unlock suggestions.
+- A 32-node branching Skill Tree across Push, Pull, Legs, Core, and Skills, unlocked from logged sets or manual mastery.
+- Progression paths remain available in the Skill Tree view; node sheets show goals, prerequisites, progress, and a direct Log action.
+- Skill mastery and opened-node markers are included in backup/restore and reset with the rest of app data.
 - Log an exercise directly from its guide into the workout form.
 - Beginner, intermediate, and skill routines; starting one opens the logger with the first exercise preselected.
 - Custom routines saved on-device, with one-tap logging for each planned movement.
@@ -47,6 +49,7 @@ Your records stay in this browser's local storage.
 
 To make a production build, run `npm run build`. Vite writes the ready-to-publish
 site to the `dist` folder. Preview it locally with `npm run preview`.
+Run the skill-state assertions with `node scripts/test-skill-tree.js`.
 
 ## Install and use offline
 

@@ -68,7 +68,13 @@ Application/Storage panels. The build should complete without errors.
 
 - [ ] Search by exercise name and filter each category.
 - [ ] Open guides and review steps, cues, common mistakes, and tutorial links.
-- [ ] Open progression trees and use a movement's Log action.
+- [ ] Switch to Skill tree and verify all five branch chips and their progress counts.
+- [ ] Confirm locked, available, in-progress, and mastered nodes have distinct shapes and text labels.
+- [ ] Complete a goal in one workout session and confirm its node masters only after enough qualifying sets.
+- [ ] Confirm a two-prerequisite skill stays locked until both prerequisite nodes are mastered.
+- [ ] Open a node, follow a prerequisite, mark mastery manually, and use Log this to preselect the exercise.
+- [ ] Confirm a newly mastered node shows New until opened and that an unlock toast appears after logging.
+- [ ] Check the 32-node total and confirm all existing progression paths and unlock text remain available below the tree.
 - [ ] Confirm a no-results search has a useful empty state.
 
 ### Phase 8 — Programs and timers
@@ -91,10 +97,13 @@ Application/Storage panels. The build should complete without errors.
 - [ ] Set weekly workout goal to a non-default number and confirm the Home ring uses it.
 - [ ] Set Theme to System, switch the browser's color preference, and confirm the app and charts follow it.
 - [ ] Export all data and check the downloaded JSON contains the saved groups.
+- [ ] Confirm `skillMastery` includes manual mastery and opened-node IDs in the backup.
 - [ ] Import a valid backup in a disposable profile and confirm all groups are restored.
+- [ ] Import a legacy backup without `skillMastery` and confirm empty skill progress is supplied.
 - [ ] Try invalid JSON, an unsupported backup version, invalid field values, and a file over 5 MB; confirm clear errors and that existing data is not replaced.
 - [ ] Test reset only after exporting a backup; cancel once, then confirm reset in a disposable profile.
 - [ ] Confirm the reset clears saved records and restores default settings.
+- [ ] Confirm reset removes `skillMastery`; removing demo data must leave manual skill mastery intact.
 - [ ] Load and remove demo data; confirm the real records, theme, and goals are unchanged.
 - [ ] Export and restore a backup containing demo records, then remove the restored demo data.
 - [ ] Reload demo data in a clean profile twice and compare the generated records for determinism.
@@ -117,8 +126,12 @@ Application/Storage panels. The build should complete without errors.
 
 ## Verification record
 
-- Earlier browser smoke tests covered the existing app flows before the latest demo/theme/PWA changes; they are not a substitute for rechecking the changed screens.
-- Browser verification: a production preview started, but the integrated browser and shell could not connect to its local port in this sandbox. Screenshots, viewport/control counts, runtime console inspection, and production offline behavior remain unverified here.
+- Skill tree unit script: `node scripts/test-skill-tree.js` passed for all four states, multi-prerequisite unlocks, seconds/reps goals, exercise-name matching, manual overrides, and next-up selection.
+- Demo tree/backup assertions passed: 32 nodes, Push and Legs examples mastered, Pull and Core examples in progress, Skills remain locked, and manual mastery survives demo clearing and backup restoration.
+- Tree integrity assertions passed: all 32 IDs are unique, each branch has an available root, and exercise and prerequisite references resolve.
+- Production build passed after the Library skill-tree UI and backup changes.
+- Earlier browser smoke tests covered existing screens before this Skill Tree change; they do not verify the new UI.
+- Browser verification: Vite dev server started at `http://127.0.0.1:5174/`, but both the integrated browser and shell timed out connecting to it. Screenshots at 390×844, light/dark appearance, console inspection, and live offline behavior remain unverified in this environment.
 - Production build: `npm run build` passed with Vite 8.3.7. Vite reports a 517 kB JavaScript chunk-size advisory; the build completed successfully.
 - Demo data checks: direct assertions passed for deterministic generation, safe merge and removal, idempotent loading, preservation of real records/goals/theme, daily nutrition ranges, backup validation/restore followed by demo removal, and unset-goal defaults.
 - Settings checks: current streak and weekly-goal normalization assertions passed.

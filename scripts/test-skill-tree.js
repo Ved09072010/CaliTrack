@@ -24,6 +24,9 @@ assert.equal(nodeState(result, "plank").bestProgress, "Best 60 seconds of 60 · 
 result = getSkillStates([workout("Plank", [60, 60, 60], "seconds")]);
 assert.equal(nodeState(result, "plank").state, "mastered");
 assert.equal(nodeState(result, "side-plank").state, "available");
+assert.equal(nodeState(result, "tuck-l-sit").state, "locked");
+result = getSkillStates([workout("Plank", [60, 60, 60], "seconds")], ["dips"]);
+assert.equal(nodeState(result, "tuck-l-sit").state, "available");
 
 result = getSkillStates([workout("pushup", [7])]);
 assert.equal(nodeState(result, "wall-push-up").bestValue, 0);
@@ -52,5 +55,12 @@ result = getSkillStates(
   ["dips"],
 );
 assert.equal(nodeState(result, "tuck-l-sit").state, "available");
+
+result = getSkillStates([
+  workout("Plank", [60], "seconds"),
+  workout("Dead bug", [8, 8]),
+]);
+assert.equal(result.nextUp.id, "dead-bug");
+assert.equal(result.nodes.length, 32);
 
 console.log("Skill tree tests passed: states, branching prerequisites, goal types, name matching, overrides, and next up.");
