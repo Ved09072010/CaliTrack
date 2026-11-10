@@ -18,6 +18,23 @@ export function getBestWorkoutStreak(workouts) {
   return best;
 }
 
+export function getCurrentWorkoutStreak(workouts, today) {
+  const days = new Set(workouts.map((workout) => workout.date).filter(isValidDate));
+  const yesterday = new Date(`${today}T00:00:00Z`);
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  let cursor = days.has(today) ? today : yesterday.toISOString().slice(0, 10);
+  if (!days.has(cursor)) return 0;
+
+  let streak = 0;
+  while (days.has(cursor)) {
+    streak += 1;
+    const previous = new Date(`${cursor}T00:00:00Z`);
+    previous.setUTCDate(previous.getUTCDate() - 1);
+    cursor = previous.toISOString().slice(0, 10);
+  }
+  return streak;
+}
+
 export function getPersonalRecordsThisMonth(workouts, today) {
   const month = today.slice(0, 7);
   const bestByExercise = new Map();
@@ -47,6 +64,7 @@ export function getDashboardStats(workouts, today) {
         : 0
     ), 0),
     bestStreak: getBestWorkoutStreak(workouts),
+    currentStreak: getCurrentWorkoutStreak(workouts, today),
     recordsThisMonth: getPersonalRecordsThisMonth(workouts, today),
   };
 }

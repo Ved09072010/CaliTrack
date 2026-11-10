@@ -4,12 +4,11 @@ import { APP_DATA_KEYS, validateAppData, validateBackup } from "./appData.js";
 import { BottomSheet, Icon } from "./ui.jsx";
 import { DEFAULT_SETTINGS } from "./settingsData.js";
 
-export default function Settings({ settings, storageError, onSaveSettings, onImport, onReset }) {
+export default function Settings({ settings, storageError, onSaveSettings, onImport, onReset, onLoadDemo, onClearDemo }) {
   const [sheet, setSheet] = useState("");
   const [draft, setDraft] = useState(settings);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(Boolean(storageError));
-  const [backupFile, setBackupFile] = useState(null);
 
   function showSheet(name) {
     setDraft(settings);
@@ -86,6 +85,21 @@ export default function Settings({ settings, storageError, onSaveSettings, onImp
       setMessage(error.message);
       setIsError(true);
     }
+
+  }
+
+  function runDemoAction(action) {
+    try {
+      const changed = action === "load" ? onLoadDemo() : onClearDemo();
+      setSheet("");
+      setMessage(action === "load"
+        ? (changed ? "Sample data loaded." : "Sample data already loaded.")
+        : "Sample data removed.");
+      setIsError(false);
+    } catch (error) {
+      setMessage(error.message);
+      setIsError(true);
+    }
   }
 
   return <>
@@ -94,9 +108,11 @@ export default function Settings({ settings, storageError, onSaveSettings, onImp
     <section className="settings-list" aria-label="Settings">
       <button className="settings-row" type="button" onClick={() => showSheet("theme")}><span>Theme</span><strong>{settings.theme === "system" ? "System" : settings.theme}</strong><Icon name="arrow" /></button>
       <button className="settings-row" type="button" onClick={() => showSheet("units")}><span>Units</span><strong>{settings.units === "imperial" ? "Imperial" : "Metric"}</strong><Icon name="arrow" /></button>
-      <button className="settings-row" type="button" onClick={() => showSheet("goals")}><span>Daily goals</span><Icon name="arrow" /></button>
+      <button className="settings-row" type="button" onClick={() => showSheet("goals")}><span>Goals</span><Icon name="arrow" /></button>
       <button className="settings-row" type="button" onClick={() => showSheet("export")}><span>Export backup</span><Icon name="arrow" /></button>
       <button className="settings-row" type="button" onClick={() => showSheet("import")}><span>Restore backup</span><Icon name="arrow" /></button>
+      <button className="settings-row" type="button" onClick={() => showSheet("load-demo")}><span>Load demo data</span><Icon name="arrow" /></button>
+      <button className="settings-row" type="button" onClick={() => showSheet("clear-demo")}><span>Remove demo data</span><Icon name="arrow" /></button>
       <button className="settings-row is-danger" type="button" onClick={() => showSheet("reset")}><span>Reset data</span><Icon name="arrow" /></button>
       {message && <p className={`form-message${isError ? " is-error" : ""}`} role={isError ? "alert" : "status"}>{message}</p>}
     </section>
@@ -107,9 +123,9 @@ export default function Settings({ settings, storageError, onSaveSettings, onImp
     <BottomSheet open={sheet === "units"} title="Units" onClose={() => setSheet("")}>
       <form className="sheet-form" onSubmit={saveSettings}><label className="field"><span>Measure in</span><select value={draft.units} onChange={(event) => setDraft({ ...draft, units: event.target.value })}><option value="metric">Metric (kg)</option><option value="imperial">Imperial (lb)</option></select></label><button className="primary-button" type="submit">Save</button></form>
     </BottomSheet>
-    <BottomSheet open={sheet === "goals"} title="Daily goals" onClose={() => setSheet("")}>
+    <BottomSheet open={sheet === "goals"} title="Goals" onClose={() => setSheet("")}>
       <form className="sheet-form" onSubmit={saveSettings}>
-        {[[ "calorieGoal", "Calories" ], [ "proteinGoal", "Protein" ], [ "waterGoal", "Water" ]].map(([key, label]) => <label className="field" key={key}><span>{label}</span><input type="number" min="1" value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: Number(event.target.value) })} /></label>)}
+        {[[ "calorieGoal", "Calories" ], [ "proteinGoal", "Protein" ], [ "waterGoal", "Water" ], [ "weeklyWorkoutGoal", "Workouts per week" ]].map(([key, label]) => <label className="field" key={key}><span>{label}</span><input type="number" min="1" value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: Number(event.target.value) })} /></label>)}
         <button className="primary-button" type="submit">Save</button>
       </form>
     </BottomSheet>
@@ -119,6 +135,14 @@ export default function Settings({ settings, storageError, onSaveSettings, onImp
     <BottomSheet open={sheet === "import"} title="Restore backup" onClose={() => setSheet("")}>
       <label className="field"><span>JSON file</span><input type="file" accept=".json,application/json" onChange={importBackup} /></label>
       {isError && <p className="form-message is-error" role="alert">{message}</p>}
+    </BottomSheet>
+    <BottomSheet open={sheet === "load-demo"} title="Load demo data?" onClose={() => setSheet("")}>
+      <p className="sheet-copy">Adds 12 weeks of sample records beside your data. Your goals and theme stay unchanged.</p>
+      <div className="sheet-actions"><button className="secondary-button" type="button" onClick={() => setSheet("")}>Cancel</button><button className="primary-button" type="button" onClick={() => runDemoAction("load")}>Load</button></div>
+    </BottomSheet>
+    <BottomSheet open={sheet === "clear-demo"} title="Remove demo data?" onClose={() => setSheet("")}>
+      <p className="sheet-copy">Removes only records with demo IDs. Your real records and preferences stay.</p>
+      <div className="sheet-actions"><button className="secondary-button" type="button" onClick={() => setSheet("")}>Cancel</button><button className="primary-button danger-button" type="button" onClick={() => runDemoAction("clear")}>Remove</button></div>
     </BottomSheet>
     <BottomSheet open={sheet === "reset"} title="Reset CaliTrack?" onClose={() => setSheet("")}>
       <p className="sheet-copy">This removes all saved data from this device.</p>

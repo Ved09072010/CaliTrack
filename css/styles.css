@@ -641,6 +641,37 @@ button:not(:disabled):active { transform: scale(.98); }
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 
+.app-toast {
+  position: fixed;
+  z-index: 5;
+  top: max(14px, env(safe-area-inset-top));
+  left: 50%;
+  max-width: calc(100vw - 32px);
+  margin: 0;
+  padding: 11px 16px;
+  transform: translateX(-50%);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--glass);
+  color: var(--text);
+  box-shadow: var(--warm-shadow);
+  font-size: .86rem;
+  text-align: center;
+}
+
+.demo-prompt {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 16px;
+}
+
+.demo-prompt > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .home-header {
   display: flex;
   align-items: flex-start;

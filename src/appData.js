@@ -37,9 +37,9 @@ export function normalizeSettings(value) {
     throw new Error("Settings must be a JSON object.");
   }
   const settings = { ...DEFAULT_SETTINGS, ...value };
-  if (!["dark", "light"].includes(settings.theme)
+  if (!["system", "dark", "light"].includes(settings.theme)
     || !["metric", "imperial"].includes(settings.units)
-    || ["calorieGoal", "proteinGoal", "waterGoal"].some(
+    || ["calorieGoal", "proteinGoal", "waterGoal", "weeklyWorkoutGoal"].some(
       (key) => !Number.isFinite(settings[key]) || settings[key] <= 0,
     )) {
     throw new Error("Theme, units, or daily goals are invalid.");

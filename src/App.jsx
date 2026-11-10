@@ -9,6 +9,7 @@ import Library from "./Library.jsx";
 import Settings from "./Settings.jsx";
 import { DEFAULT_SETTINGS } from "./settingsData.js";
 import Workouts from "./Workouts.jsx";
+import { clearDemoData, loadDemoData } from "./demo.js";
 
 const TABS = [
   { id: "home", label: "Home", icon: <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" /> },
@@ -37,18 +38,36 @@ function initialSettings() {
 function App() {
   const [activeTab, setActiveTab] = useState("home");
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [toastMessage, setToastMessage] = useState("");
+  const [systemDark, setSystemDark] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
   const [workoutData, setWorkoutData] = useState(initialWorkoutData);
   const [settingsData, setSettingsData] = useState(initialSettings);
   const [dataVersion, setDataVersion] = useState(0);
   const [workoutRequest, setWorkoutRequest] = useState(0);
   const [requestedExercise, setRequestedExercise] = useState("");
   const [activeRoutine, setActiveRoutine] = useState(null);
+  const effectiveTheme = settingsData.settings.theme === "system"
+    ? (systemDark ? "dark" : "light")
+    : settingsData.settings.theme;
 
   useEffect(() => {
-    document.documentElement.dataset.theme = settingsData.settings.theme;
+    document.documentElement.dataset.theme = effectiveTheme;
     document.querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", settingsData.settings.theme === "light" ? "#f6f0e6" : "#0e0d0c");
-  }, [settingsData.settings.theme]);
+      ?.setAttribute("content", effectiveTheme === "light" ? "#f6f0e6" : "#0e0d0c");
+  }, [effectiveTheme]);
+
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-color-scheme: dark)");
+    const updatePreference = (event) => setSystemDark(event.matches);
+    preference.addEventListener("change", updatePreference);
+    return () => preference.removeEventListener("change", updatePreference);
+  }, []);
+
+  useEffect(() => {
+    if (!toastMessage) return undefined;
+    const timeout = window.setTimeout(() => setToastMessage(""), 2500);
+    return () => window.clearTimeout(timeout);
+  }, [toastMessage]);
 
   useEffect(() => {
     const updateConnection = () => setIsOnline(navigator.onLine);
@@ -81,6 +100,32 @@ function App() {
   function resetAppData() {
     setSettingsData({ settings: DEFAULT_SETTINGS, error: "" });
     setWorkoutData({ workouts: [], error: "" });
+    setDataVersion((version) => version + 1);
+  }
+
+  function refreshSavedData() {
+    setSettingsData(initialSettings());
+    setWorkoutData(initialWorkoutData());
+    setDataVersion((version) => version + 1);
+  }
+
+  function addDemoData() {
+    const loaded = loadDemoData();
+    const settings = { ...load("settings", DEFAULT_SETTINGS), demoPromptDismissed: true };
+    save("settings", settings);
+    refreshSavedData();
+    setToastMessage(loaded ? "Sample data loaded." : "Sample data already loaded.");
+    return loaded;
+  }
+
+  function removeDemoData() {
+    clearDemoData();
+    refreshSavedData();
+    setToastMessage("Sample data removed.");
+  }
+
+  function dismissDemoPrompt() {
+    save("settings", { ...load("settings", DEFAULT_SETTINGS), demoPromptDismissed: true });
     setDataVersion((version) => version + 1);
   }
 
@@ -128,9 +173,10 @@ function App() {
   }
 
   return (
-    <div className="app-shell" data-theme={settingsData.settings.theme} data-active-tab={activeTab}>
+    <div className="app-shell" data-theme={effectiveTheme} data-active-tab={activeTab}>
       <main id="main-content">
         {!isOnline && <p className="offline-notice" role="status">Offline mode · Your saved data stays on this device.</p>}
+        {toastMessage && <p className="app-toast" role="status">{toastMessage}</p>}
         <section id="panel-home" className="tab-panel" role="tabpanel" aria-labelledby="tab-home" tabIndex="-1" hidden={activeTab !== "home"}>
           <Dashboard
             key={`dashboard-${dataVersion}`}
@@ -140,6 +186,8 @@ function App() {
             onWorkout={openWorkout}
             onTab={chooseTab}
             onSettings={() => chooseTab("settings")}
+            onLoadDemo={addDemoData}
+            onDismissDemo={dismissDemoPrompt}
           />
         </section>
 
@@ -154,7 +202,7 @@ function App() {
             activeRoutine={activeRoutine}
             onLogRoutineExercise={logRoutineExercise}
             units={settingsData.settings.units}
-            theme={settingsData.settings.theme}
+            theme={effectiveTheme}
             onStartRoutine={startRoutine}
           />
         </section>
@@ -182,6 +230,8 @@ function App() {
             onSaveSettings={saveSettings}
             onImport={importAppData}
             onReset={resetAppData}
+            onLoadDemo={addDemoData}
+            onClearDemo={removeDemoData}
           />
         </section>
 

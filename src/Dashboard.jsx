@@ -4,7 +4,12 @@ import { load } from "../js/storage.js";
 import { getDashboardStats } from "./dashboardStats.js";
 import { Icon, IconButton, ProgressRing, SectionHeading } from "./ui.jsx";
 
-const DEFAULT_GOALS = { calorieGoal: 2000, proteinGoal: 100, waterGoal: 2000 };
+const DEFAULT_GOALS = {
+  calorieGoal: 2000,
+  proteinGoal: 100,
+  waterGoal: 2000,
+  weeklyWorkoutGoal: 4,
+};
 
 function getDashboardData() {
   try {
@@ -12,12 +17,15 @@ function getDashboardData() {
     const checks = load("habitChecks", []);
     const meals = load("meals", []);
     const water = load("water", []);
+    const bodyStats = load("bodyStats", []);
+    const favoriteFoods = load("favoriteFoods", []);
+    const routines = load("customRoutines", []);
     const savedSettings = load("settings", {});
     if (!savedSettings || typeof savedSettings !== "object" || Array.isArray(savedSettings)) {
       throw new Error("Saved nutrition goals have an invalid format. Open Diet to review them.");
     }
     const settings = { ...DEFAULT_GOALS, ...savedSettings };
-    if (![habits, checks, meals, water].every(Array.isArray)
+    if (![habits, checks, meals, water, bodyStats, favoriteFoods, routines].every(Array.isArray)
       || !settings
       || Object.keys(DEFAULT_GOALS).some((key) => !Number.isFinite(settings[key]) || settings[key] <= 0)) {
       throw new Error("Saved dashboard data has an invalid format. Open each tracker to review its saved data.");
@@ -28,9 +36,9 @@ function getDashboardData() {
       || water.some((entry) => !entry || typeof entry.date !== "string" || !Number.isFinite(entry.ml) || entry.ml < 0)) {
       throw new Error("Some saved tracker entries are invalid. Open the relevant tab to review its data.");
     }
-    return { habits, checks, meals, water, settings, error: "" };
+    return { habits, checks, meals, water, bodyStats, favoriteFoods, routines, settings, error: "" };
   } catch (error) {
-    return { habits: [], checks: [], meals: [], water: [], settings: DEFAULT_GOALS, error: error.message };
+    return { habits: [], checks: [], meals: [], water: [], bodyStats: [], favoriteFoods: [], routines: [], settings: DEFAULT_GOALS, error: error.message };
   }
 }
 
@@ -38,7 +46,7 @@ function Stat({ value, label }) {
   return <div className="dashboard-stat"><strong>{value}</strong><span>{label}</span></div>;
 }
 
-export default function Dashboard({ workouts, workoutError, active, onWorkout, onSettings }) {
+export default function Dashboard({ workouts, workoutError, active, onWorkout, onSettings, onLoadDemo, onDismissDemo }) {
   const [data, setData] = useState(getDashboardData);
   const today = todayString();
 
@@ -73,6 +81,10 @@ export default function Dashboard({ workouts, workoutError, active, onWorkout, o
     };
   });
   const workoutDays = workouts.filter((workout) => workout.date >= week[0].date && workout.date <= today).length;
+  const showDemoPrompt = !data.error && !workoutError
+    && !data.settings.demoPromptDismissed && !data.settings.demoLoaded
+    && !workouts.length && !data.habits.length && !data.checks.length && !data.meals.length
+    && !data.water.length && !data.bodyStats.length && !data.favoriteFoods.length && !data.routines.length;
   const todayLabel = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" }).format(new Date());
   return (
     <>
@@ -87,10 +99,9 @@ export default function Dashboard({ workouts, workoutError, active, onWorkout, o
       </div>
       {workoutError && <p className="form-message is-error" role="alert">{workoutError}</p>}
       {data.error && <p className="form-message is-error" role="alert">{data.error}</p>}
-
       <section className="home-rings glass-panel" aria-label="Today's progress">
         <div className="ring-row">
-          <ProgressRing label="This week" value={workoutDays} total={3} color="var(--workout-accent)" />
+          <ProgressRing label="This week" value={workoutDays} total={data.settings.weeklyWorkoutGoal} color="var(--workout-accent)" />
           <ProgressRing label="Habits" value={completedHabits} total={activeHabits.length} color="var(--habit-accent)" />
           <ProgressRing label="Calories" value={Math.round(calories)} total={data.settings.calorieGoal} color="var(--diet-accent)" />
         </div>
@@ -120,11 +131,16 @@ export default function Dashboard({ workouts, workoutError, active, onWorkout, o
       <details className="home-extra-stats">
         <summary>Stats</summary>
         <div className="home-stats">
-          <Stat value={stats.bestStreak} label="Day streak" />
+          <Stat value={stats.currentStreak} label="Day streak" />
           <Stat value={stats.totalWorkouts} label="Workouts" />
           <Stat value={stats.recordsThisMonth} label="PRs this month" />
         </div>
       </details>
+
+      {showDemoPrompt && <section className="demo-prompt glass-panel" aria-label="Sample data">
+        <h2>Try sample data?</h2>
+        <div><button className="primary-button" type="button" onClick={onLoadDemo}>Load sample</button><button className="secondary-button" type="button" onClick={onDismissDemo}>Start fresh</button></div>
+      </section>}
     </>
   );
 }
