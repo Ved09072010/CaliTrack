@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { load, replaceMany, save } from "../js/storage.js";
-import { normalizeSettings } from "./appData.js";
+import { normalizeSettings, normalizeSkillMastery } from "./appData.js";
 import { readList } from "./data.js";
 import Dashboard from "./Dashboard.jsx";
 import Diet from "./Diet.jsx";
@@ -10,6 +10,7 @@ import Settings from "./Settings.jsx";
 import { DEFAULT_SETTINGS } from "./settingsData.js";
 import Workouts from "./Workouts.jsx";
 import { clearDemoData, loadDemoData } from "./demo.js";
+import { getNewlyMasteredSkill } from "./skillTree.js";
 
 const TABS = [
   { id: "home", label: "Home", icon: <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" /> },
@@ -46,6 +47,8 @@ function App() {
   const [workoutRequest, setWorkoutRequest] = useState(0);
   const [requestedExercise, setRequestedExercise] = useState("");
   const [activeRoutine, setActiveRoutine] = useState(null);
+  const previousWorkouts = useRef(workoutData.workouts);
+  const workoutSavePending = useRef(false);
   const effectiveTheme = settingsData.settings.theme === "system"
     ? (systemDark ? "dark" : "light")
     : settingsData.settings.theme;
@@ -62,6 +65,23 @@ function App() {
     preference.addEventListener("change", updatePreference);
     return () => preference.removeEventListener("change", updatePreference);
   }, []);
+
+  useEffect(() => {
+    const previous = previousWorkouts.current;
+    const current = workoutData.workouts;
+    previousWorkouts.current = current;
+    const wasSavedWorkout = workoutSavePending.current;
+    workoutSavePending.current = false;
+    if (!wasSavedWorkout || previous === current) return;
+
+    try {
+      const mastery = normalizeSkillMastery(load("skillMastery", { mastered: [], seen: [] }));
+      const newlyMastered = getNewlyMasteredSkill(previous, current, mastery);
+      if (newlyMastered) setToastMessage(`Skill unlocked: ${newlyMastered.exercise}`);
+    } catch (error) {
+      setToastMessage(error.message);
+    }
+  }, [workoutData.workouts]);
 
   useEffect(() => {
     if (!toastMessage) return undefined;
@@ -81,6 +101,7 @@ function App() {
 
   function persistWorkouts(nextWorkouts) {
     save("workoutLog", nextWorkouts);
+    workoutSavePending.current = nextWorkouts !== workoutData.workouts;
     setWorkoutData({ workouts: nextWorkouts, error: "" });
   }
 

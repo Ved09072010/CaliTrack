@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { getSkillStates } from "../src/skillTree.js";
+import { getNewlyMasteredSkill, getSkillStates } from "../src/skillTree.js";
 
 function nodeState(result, id) {
   return result.nodes.find((node) => node.id === id);
@@ -49,6 +49,10 @@ result = getSkillStates([workout("Wall push up", [12, 12, 12])]);
 assert.equal(nodeState(result, "wall-push-up").state, "mastered");
 assert.equal(nodeState(result, "incline-push-up").state, "available");
 assert.equal(result.nextUp.id, "incline-push-up");
+const wallPushUps = [workout("Wall push up", [12, 12, 12])];
+assert.equal(getNewlyMasteredSkill([], wallPushUps).id, "wall-push-up");
+assert.equal(getNewlyMasteredSkill([], wallPushUps, { seen: ["wall-push-up"] }), null);
+assert.equal(getNewlyMasteredSkill(wallPushUps, wallPushUps), null);
 
 result = getSkillStates(
   [workout("Plank", [60, 60, 60], "seconds")],

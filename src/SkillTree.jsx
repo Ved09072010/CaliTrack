@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { load, save } from "../js/storage.js";
 import { PROGRESSIONS, EXERCISES } from "../data/exercises.js";
 import { SKILL_BRANCHES } from "../data/skillTree.js";
@@ -42,10 +42,8 @@ export default function SkillTree({ workouts, onLogExercise }) {
   const [showAllPaths, setShowAllPaths] = useState(false);
   const [connectionLayout, setConnectionLayout] = useState({ width: 1, height: 1, edges: [] });
   const [error, setError] = useState(savedMastery.error);
-  const [toast, setToast] = useState("");
   const stageRef = useRef(null);
   const nodeRefs = useRef(new Map());
-  const previousWorkouts = useRef(workouts);
   const mastery = savedMastery.value;
   const states = useMemo(() => getSkillStates(workouts, mastery), [workouts, mastery]);
   const nodesInBranch = useMemo(
@@ -57,24 +55,6 @@ export default function SkillTree({ workouts, onLogExercise }) {
   const masteredCount = states.nodes.filter((node) => node.state === "mastered").length;
   const manualMastery = useMemo(() => new Set(mastery.mastered), [mastery.mastered]);
   const seen = useMemo(() => new Set(mastery.seen), [mastery.seen]);
-
-  useEffect(() => {
-    const previous = previousWorkouts.current;
-    if (previous !== workouts) {
-      const previousStates = getSkillStates(previous, mastery);
-      const previousMastered = new Set(previousStates.nodes.filter((node) => node.state === "mastered").map((node) => node.id));
-      const newlyMastered = states.nodes.find((node) => node.state === "mastered"
-        && !previousMastered.has(node.id) && !seen.has(node.id));
-      if (newlyMastered) setToast(`Skill unlocked: ${newlyMastered.exercise}`);
-    }
-    previousWorkouts.current = workouts;
-  }, [workouts, states.nodes, mastery, seen]);
-
-  useEffect(() => {
-    if (!toast) return undefined;
-    const timeout = window.setTimeout(() => setToast(""), 2400);
-    return () => window.clearTimeout(timeout);
-  }, [toast]);
 
   useLayoutEffect(() => {
     const stage = stageRef.current;
@@ -169,7 +149,6 @@ export default function SkillTree({ workouts, onLogExercise }) {
     {workouts.length === 0 && masteredCount === 0 && <p className="skill-tree-empty">Start with any open skill.</p>}
     {states.nextUp && <p className="skill-next-up">Next up: <strong>{states.nextUp.exercise}</strong></p>}
     {error && <p className="form-message is-error" role="alert">{error}</p>}
-    {toast && <p className="skill-toast" role="status">{toast}</p>}
 
     <div className="skill-tree-stage" ref={stageRef}>
       <svg className="skill-tree-connectors" viewBox={`0 0 ${connectionLayout.width} ${connectionLayout.height}`} aria-hidden="true" focusable="false">

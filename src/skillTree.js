@@ -93,3 +93,18 @@ export function getSkillStates(workoutLog = [], masteryOverrides = []) {
 
   return { nodes, nextUp };
 }
+
+export function getNewlyMasteredSkill(previousWorkouts, workoutLog, masteryOverrides = []) {
+  const previous = getSkillStates(previousWorkouts, masteryOverrides);
+  const current = getSkillStates(workoutLog, masteryOverrides);
+  const previouslyMastered = new Set(
+    previous.nodes.filter((node) => node.state === "mastered").map((node) => node.id),
+  );
+  const overrides = masteryOverrides && !Array.isArray(masteryOverrides)
+    ? masteryOverrides
+    : {};
+  const seen = new Set(Array.isArray(overrides.seen) ? overrides.seen : []);
+  return current.nodes.find((node) => node.state === "mastered"
+    && !previouslyMastered.has(node.id)
+    && !seen.has(node.id)) || null;
+}
