@@ -48,6 +48,8 @@ result = getSkillStates([], ["pull-up", "dips"]);
 assert.equal(nodeState(result, "muscle-up").state, "locked");
 result = getSkillStates([], ["muscle-up"]);
 assert.equal(nodeState(result, "muscle-up").state, "mastered");
+result = getSkillStates([workout("Muscle-up", [3, 3, 3])]);
+assert.equal(nodeState(result, "muscle-up").state, "mastered");
 for (const prerequisite of [
   "pull-up",
   "negative-pull-up",
