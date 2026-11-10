@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Chart from "chart.js/auto";
 import { save } from "../js/storage.js";
 import { formatDate, readList } from "./data.js";
 import { todayString } from "../js/utils.js";
 import { fromKilograms, toKilograms } from "./settingsData.js";
 import { getChartTheme } from "./chartTheme.js";
 import SummaryCards from "./SummaryCards.jsx";
+import { BottomSheet, Icon, IconButton } from "./ui.jsx";
 
 function initialBodyData() {
   try {
@@ -30,17 +32,17 @@ function chartOptions(theme) {
 }
 
 function ExerciseProgress({ workouts, units, theme }) {
-  const [expanded, setExpanded] = useState(false);
   const [selected, setSelected] = useState("");
   const canvasRef = useRef(null);
   const exercises = [...new Set(workouts.map((workout) => workout.exercise))].sort();
-  const records = workouts
-    .filter((workout) => workout.exercise === selected)
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const selectedExercise = selected || exercises[0] || "";
+  const records = useMemo(() => workouts
+    .filter((workout) => workout.exercise === selectedExercise)
+    .sort((a, b) => a.date.localeCompare(b.date)), [workouts, selectedExercise]);
   const isHold = records.length > 0 && records.every((workout) => workout.sets.some((set) => set.seconds > 0));
 
   useEffect(() => {
-    if (!expanded || records.length === 0 || !window.Chart || !canvasRef.current) return undefined;
+    if (records.length === 0 || !canvasRef.current) return undefined;
     const points = new Map();
     records.forEach((workout) => {
       const point = points.get(workout.date) || { best: 0, volume: 0 };
@@ -58,7 +60,7 @@ function ExerciseProgress({ workouts, units, theme }) {
     const fill = context.createLinearGradient(0, 0, 0, 220);
     fill.addColorStop(0, `${colors.accent}55`);
     fill.addColorStop(1, `${colors.accent}00`);
-    const chart = new window.Chart(canvasRef.current, {
+    const chart = new Chart(canvasRef.current, {
       type: "bar",
       data: {
         labels: dates.map(formatDate),
@@ -96,23 +98,20 @@ function ExerciseProgress({ workouts, units, theme }) {
       },
     });
     return () => chart.destroy();
-  }, [expanded, records, isHold, units, theme]);
+  }, [records, isHold, units, theme]);
 
-  const chartAvailable = Boolean(window.Chart);
   return (
-    <details className="progress-disclosure" onToggle={(event) => setExpanded(event.currentTarget.open)}>
-      <summary>Exercise progress</summary>
-      <div className="disclosure-content">
-        <div className="exercise-chips" role="group" aria-label="Choose an exercise to see progress">
-          {exercises.map((exercise) => (
-            <button className={`quick-chip${selected === exercise ? " is-selected" : ""}`} type="button" aria-pressed={selected === exercise} key={exercise} onClick={() => setSelected(exercise)}>{exercise}</button>
-          ))}
-        </div>
-        {records.length > 0 && chartAvailable
-          ? <div className="progress-card"><canvas id="exercise-chart" ref={canvasRef} role="img" aria-label="Exercise performance chart" /></div>
-          : <p className="muted">{records.length === 0 ? "Log workouts to see exercise progress here." : "The chart needs an internet connection to load."}</p>}
-      </div>
-    </details>
+    <section className="progress-disclosure">
+      <h2>Exercise progress</h2>
+      {exercises.length > 1 && <div className="exercise-chips" role="group" aria-label="Choose an exercise to see progress">
+        {exercises.map((exercise) => (
+          <button className={`quick-chip${selectedExercise === exercise ? " is-selected" : ""}`} type="button" aria-pressed={selectedExercise === exercise} key={exercise} onClick={() => setSelected(exercise)}>{exercise}</button>
+        ))}
+      </div>}
+      {records.length > 0
+        ? <div className="progress-card"><canvas id="exercise-chart" ref={canvasRef} role="img" aria-label="Exercise performance chart" /></div>
+        : <p className="muted">Log workouts to see progress.</p>}
+    </section>
   );
 }
 
@@ -122,15 +121,15 @@ function BodyWeightProgress({ units, theme }) {
   const [weight, setWeight] = useState("");
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(Boolean(bodyData.error));
-  const [expanded, setExpanded] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const canvasRef = useRef(null);
   const stats = bodyData.stats;
-  const sortedStats = [...stats].sort((a, b) => a.date.localeCompare(b.date));
+  const sortedStats = useMemo(() => [...stats].sort((a, b) => a.date.localeCompare(b.date)), [stats]);
 
   useEffect(() => {
-    if (!expanded || !sortedStats.length || !window.Chart || !canvasRef.current) return undefined;
+    if (!sortedStats.length || !canvasRef.current) return undefined;
     const colors = getChartTheme(theme);
-    const chart = new window.Chart(canvasRef.current, {
+    const chart = new Chart(canvasRef.current, {
       type: "line",
       data: {
         labels: sortedStats.map((item) => formatDate(item.date)),
@@ -154,7 +153,7 @@ function BodyWeightProgress({ units, theme }) {
       },
     });
     return () => chart.destroy();
-  }, [expanded, sortedStats, units, theme]);
+  }, [sortedStats, units, theme]);
 
   function submit(event) {
     event.preventDefault();
@@ -173,7 +172,8 @@ function BodyWeightProgress({ units, theme }) {
       setBodyData({ stats: nextStats, error: "" });
       setWeight("");
       setIsError(false);
-      setMessage("Weight saved.");
+      setMessage("Saved.");
+      setSheetOpen(false);
     } catch (error) {
       setIsError(true);
       setMessage(error.message);
@@ -181,11 +181,17 @@ function BodyWeightProgress({ units, theme }) {
   }
 
   return (
-    <details className="progress-disclosure" onToggle={(event) => setExpanded(event.currentTarget.open)}>
-      <summary>Body weight</summary>
+    <section className="progress-disclosure">
+      <div className="section-heading"><h2>Body weight</h2><IconButton label="Log body weight" onClick={() => setSheetOpen(true)}><Icon name="plus" /></IconButton></div>
       <div className="disclosure-content">
         {bodyData.error && <p className="form-message is-error" role="alert">{bodyData.error}</p>}
-        <form className="body-stats-form" noValidate onSubmit={submit}>
+        {sortedStats.length > 0
+          ? <div className="progress-card"><canvas id="body-weight-chart" ref={canvasRef} role="img" aria-label="Body weight history chart" /></div>
+          : <p className="muted">Log weight to see your trend.</p>}
+        {message && <p id="body-stats-message" className={`form-message${isError ? " is-error" : ""}`} role={isError ? "alert" : "status"}>{message}</p>}
+      </div>
+      <BottomSheet open={sheetOpen} title="Body weight" onClose={() => setSheetOpen(false)}>
+        <form className="body-stats-form sheet-form" noValidate onSubmit={submit}>
           <label className="field">
             <span>Date</span>
             <input id="body-date" type="date" required disabled={Boolean(bodyData.error)} value={date} onChange={(event) => setDate(event.target.value)} />
@@ -195,13 +201,9 @@ function BodyWeightProgress({ units, theme }) {
             <input id="body-weight" type="number" min="0.1" step="0.1" inputMode="decimal" placeholder={units === "imperial" ? "e.g. 145" : "e.g. 65.5"} required disabled={Boolean(bodyData.error)} value={weight} onChange={(event) => setWeight(event.target.value)} />
           </label>
           <button className="primary-button" type="submit" disabled={Boolean(bodyData.error)}>Save weight</button>
-          {message && <p id="body-stats-message" className={`form-message${isError ? " is-error" : ""}`} role={isError ? "alert" : "status"}>{message}</p>}
         </form>
-        {sortedStats.length > 0 && window.Chart
-          ? <div className="progress-card"><canvas id="body-weight-chart" ref={canvasRef} role="img" aria-label="Body weight history chart" /></div>
-          : <p className="muted">{sortedStats.length === 0 ? "Log body weight to see your trend." : "The chart needs an internet connection to load."}</p>}
-      </div>
-    </details>
+      </BottomSheet>
+    </section>
   );
 }
 

@@ -1,7 +1,6 @@
 const CACHE_PREFIX = "calitrack-";
 const CACHE_VERSION = "v1";
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
-const CHART_URL = "https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js";
 
 function appUrl(path = "") {
   return new URL(path, self.registration.scope).href;
@@ -15,14 +14,6 @@ self.addEventListener("install", (event) => {
       appUrl("manifest.webmanifest"),
       appUrl("icons/calitrack.svg"),
     ]);
-
-    // Chart.js is optional; the tracker still works when its CDN is unavailable.
-    try {
-      const response = await fetch(CHART_URL);
-      if (response.ok) await cache.put(CHART_URL, response);
-    } catch {
-      // Offline use should not fail just because the optional chart could not download.
-    }
 
     await self.skipWaiting();
   })());
@@ -42,9 +33,7 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   const requestUrl = new URL(request.url);
   const isSameOrigin = requestUrl.origin === self.location.origin;
-  const isChartScript = requestUrl.href === CHART_URL;
-
-  if (request.method !== "GET" || (!isSameOrigin && !isChartScript)) return;
+  if (request.method !== "GET" || !isSameOrigin) return;
 
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
@@ -53,7 +42,7 @@ self.addEventListener("fetch", (event) => {
 
     try {
       const response = await fetch(request);
-      if (response.ok && (isSameOrigin || response.type === "cors")) {
+      if (response.ok) {
         await cache.put(request, response.clone());
       }
       return response;

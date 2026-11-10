@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import Chart from "chart.js/auto";
 import { createId, formatDate, todayString } from "../js/utils.js";
 import { load, save } from "../js/storage.js";
 import { BottomSheet, Icon, IconButton, QuickChips, SegmentedControl } from "./ui.jsx";
@@ -57,15 +58,19 @@ function WeeklyNutritionChart({ meals, theme }) {
   }, [meals]);
 
   useEffect(() => {
-    if (!window.Chart || !canvasRef.current || !meals.length) return undefined;
+    if (!canvasRef.current || !meals.length) return undefined;
     const colors = getChartTheme(theme);
-    const chart = new window.Chart(canvasRef.current, {
+    const context = canvasRef.current.getContext("2d");
+    const fill = context.createLinearGradient(0, 0, 0, 220);
+    fill.addColorStop(0, `${colors.accent}cc`);
+    fill.addColorStop(1, `${colors.accent}40`);
+    const chart = new Chart(canvasRef.current, {
       type: "bar",
       data: {
         labels: chartData.labels,
         datasets: [
-          { label: "Calories", data: chartData.calories, backgroundColor: colors.accent, borderRadius: 7, yAxisID: "y" },
-          { label: "Protein", data: chartData.protein, backgroundColor: colors.secondary, borderRadius: 7, yAxisID: "y1" },
+          { label: "Calories", data: chartData.calories, backgroundColor: fill, borderRadius: 7, yAxisID: "y" },
+          { label: "Protein", data: chartData.protein, backgroundColor: `${colors.secondary}bb`, borderRadius: 7, yAxisID: "y1" },
         ],
       },
       options: {
@@ -83,7 +88,7 @@ function WeeklyNutritionChart({ meals, theme }) {
     return () => chart.destroy();
   }, [chartData, meals.length, theme]);
 
-  return meals.length && window.Chart
+  return meals.length
     ? <div className="progress-card"><canvas ref={canvasRef} role="img" aria-label="Weekly calories and protein chart" /></div>
     : <p className="empty-line">Log meals to see your week.</p>;
 }
