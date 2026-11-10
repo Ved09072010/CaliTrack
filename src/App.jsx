@@ -220,7 +220,11 @@ function App() {
         </section>
 
         <section id="panel-library" className="tab-panel" role="tabpanel" aria-labelledby="tab-library" tabIndex="-1" hidden={activeTab !== "library"}>
-          <Library onLogExercise={logLibraryExercise} />
+          <Library
+            key={`library-${dataVersion}`}
+            workouts={workoutData.workouts}
+            onLogExercise={logLibraryExercise}
+          />
         </section>
 
         <section id="panel-settings" className="tab-panel" role="tabpanel" aria-label="Settings and backup" tabIndex="-1" hidden={activeTab !== "settings"}>
