@@ -102,6 +102,7 @@ export default function Diet({ settings: appSettings, onSettingsChange }) {
   const [selectedMeal, setSelectedMeal] = useState(null);
   const [sheet, setSheet] = useState("");
   const [activeSection, setActiveSection] = useState("Today");
+  const [showAllMeals, setShowAllMeals] = useState(false);
   const [message, setMessage] = useState("");
   const [amount, setAmount] = useState("");
   const [goals, setGoals] = useState(appSettings || data.settings);
@@ -110,7 +111,9 @@ export default function Diet({ settings: appSettings, onSettingsChange }) {
   const todaysMeals = data.meals.filter((meal) => meal.date === today);
   const totals = totalsFor(todaysMeals);
   const todaysWater = data.water.find((entry) => entry.date === today)?.ml || 0;
-  const history = [...data.meals].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
+  const pastMeals = [...data.meals]
+    .filter((meal) => meal.date !== today)
+    .sort((a, b) => b.date.localeCompare(a.date));
   const weeklyMeals = useMemo(
     () => data.meals.filter((meal) => meal.date >= dateAgo(6) && meal.date <= today),
     [data.meals, today],
@@ -253,6 +256,18 @@ export default function Diet({ settings: appSettings, onSettingsChange }) {
     </div>;
   }
 
+  function mealList(meals, emptyMessage) {
+    if (!meals.length) return <div className="empty-card"><p>{emptyMessage}</p></div>;
+    const visibleMeals = showAllMeals ? meals : meals.slice(0, 5);
+    return <div className="diet-history">
+      {visibleMeals.map((meal) => <article className="diet-meal" key={meal.id}>
+        <div><h3>{meal.name}</h3><p>{formatDate(meal.date)} · {meal.mealType} · {meal.calories} kcal</p></div>
+        <IconButton label={`More actions for ${meal.name}`} onClick={() => { setSelectedMeal(meal); setSheet("meal-actions"); }}><Icon name="more" /></IconButton>
+      </article>)}
+      {meals.length > 5 && <button className="quiet-link" type="button" onClick={() => setShowAllMeals((value) => !value)}>{showAllMeals ? "Show fewer" : "See all"}</button>}
+    </div>;
+  }
+
   return (
     <>
       <div className="page-heading"><h1>Diet</h1></div>
@@ -262,8 +277,7 @@ export default function Diet({ settings: appSettings, onSettingsChange }) {
         <section className="diet-section">
           {progress("Calories", totals.calories, settings.calorieGoal, "kcal")}
           {progress("Protein", totals.protein, settings.proteinGoal, "g")}
-          <div className="diet-section-heading"><h2>Water</h2><strong>{todaysWater} / {settings.waterGoal} ml</strong></div>
-          <progress aria-label="Water goal progress" max={settings.waterGoal} value={Math.min(todaysWater, settings.waterGoal)} />
+          {progress("Water", todaysWater, settings.waterGoal, "ml")}
           <div className="water-actions">
             <button className="primary-button" type="button" onClick={() => changeWater(250)}>+250 ml</button>
             <IconButton label="Custom water amount" onClick={() => { setAmount(""); setSheet("water"); }}><Icon name="more" /></IconButton>
@@ -271,19 +285,15 @@ export default function Diet({ settings: appSettings, onSettingsChange }) {
         </section>
         <QuickChips label="Favorite foods" items={data.favorites.slice(0, 5)} onSelect={logFavorite} getLabel={(item) => item.name} />
         <div className="section-heading"><h2>Meals</h2><IconButton label="Edit daily goals" onClick={() => setSheet("goals")}><span aria-hidden="true">◎</span></IconButton></div>
-        {history.length ? <div className="diet-history">
-          {history.map((meal) => <article className="diet-meal" key={meal.id}>
-            <div><h3>{meal.name}</h3><p>{formatDate(meal.date)} · {meal.mealType} · {meal.calories} kcal</p></div>
-            <IconButton label={`More actions for ${meal.name}`} onClick={() => { setSelectedMeal(meal); setSheet("meal-actions"); }}><Icon name="more" /></IconButton>
-          </article>)}
-          {data.meals.length > 5 && <button className="quiet-link" type="button" onClick={() => setActiveSection("Week")}>See all</button>}
-        </div> : <div className="empty-card"><p>Log your first meal.</p></div>}
+        {mealList(todaysMeals, "Log your first meal.")}
       </>}
       {!data.error && activeSection === "Week" && <section className="diet-section">
         <h2>This week</h2>
         <WeeklyNutritionChart meals={weeklyMeals} theme={theme} />
         {progress("Calories today", totals.calories, settings.calorieGoal, "kcal")}
         {progress("Protein today", totals.protein, settings.proteinGoal, "g")}
+        <div className="section-heading"><h2>Meal history</h2></div>
+        {mealList(pastMeals, "Past meals appear here.")}
       </section>}
       {message && <p className="form-message" role="status">{message}</p>}
       {!data.error && <button className="screen-fab" type="button" aria-label="Add meal" onClick={() => openNewMeal()}><Icon name="plus" /><span>Add</span></button>}
