@@ -143,6 +143,7 @@ function App() {
             active={activeTab === "home"}
             onWorkout={openWorkout}
             onTab={chooseTab}
+            onSettings={() => chooseTab("settings")}
           />
         </section>
 

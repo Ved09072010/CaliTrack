@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { todayString } from "../js/utils.js";
 import { load } from "../js/storage.js";
 import { getDashboardStats } from "./dashboardStats.js";
+import { IconButton, ProgressRing, SectionHeading } from "./ui.jsx";
 
 const DEFAULT_GOALS = { calorieGoal: 2000, proteinGoal: 100, waterGoal: 2000 };
 
@@ -37,7 +38,7 @@ function Stat({ value, label }) {
   return <div className="dashboard-stat"><strong>{value}</strong><span>{label}</span></div>;
 }
 
-export default function Dashboard({ workouts, workoutError, active, onWorkout, onTab }) {
+export default function Dashboard({ workouts, workoutError, active, onWorkout, onTab, onSettings }) {
   const [data, setData] = useState(getDashboardData);
   const today = todayString();
 
@@ -55,89 +56,80 @@ export default function Dashboard({ workouts, workoutError, active, onWorkout, o
   const water = data.water.find((entry) => entry.date === today)?.ml || 0;
   const todaysWorkouts = workouts.filter((workout) => workout.date === today);
   const stats = getDashboardStats(workouts, today);
-  const todayHeading = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" }).format(new Date());
+  const week = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(`${today}T12:00:00`);
+    date.setDate(date.getDate() - (6 - index));
+    const key = todayString(date);
+    const trained = workouts.some((workout) => workout.date === key);
+    const done = activeHabits.filter((habit) => data.checks.some(
+      (check) => check.habitId === habit.id && check.date === key && check.done,
+    )).length;
+    const mealCalories = data.meals
+      .filter((meal) => meal.date === key)
+      .reduce((sum, meal) => sum + meal.calories, 0);
+    return {
+      date: key,
+      day: new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(date),
+      trained,
+      habits: activeHabits.length ? done / activeHabits.length : 0,
+      calories: data.settings.calorieGoal ? Math.min(1, mealCalories / data.settings.calorieGoal) : 0,
+    };
+  });
+  const workoutDays = workouts.filter((workout) => workout.date >= week[0].date && workout.date <= today).length;
+  const todayLabel = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" }).format(new Date());
   return (
     <>
-      <div className="page-heading">
-        <p className="eyebrow">YOUR TRAINING SPACE <span className="live-dot" aria-hidden="true" /></p>
-        <h1>Move with purpose.</h1>
-        <p className="intro">{todayHeading} · A little progress adds up.</p>
+      <div className="home-header">
+        <div className="page-heading">
+          <p className="eyebrow">{todayLabel}</p>
+          <h1>Move with purpose.</h1>
+          <p className="intro">Your day, at a glance.</p>
+        </div>
+        <IconButton label="Open settings and backup" onClick={onSettings}>
+          <Icon name="settings" />
+        </IconButton>
       </div>
-      <section className="home-hero">
-        <div className="hero-copy">
-          <span className="hero-kicker">READY WHEN YOU ARE</span>
-          <h2>{todaysWorkouts.length ? "You showed up today." : "Build strength one session at a time."}</h2>
-          <p>{todaysWorkouts.length ? `${todaysWorkouts.length} workout${todaysWorkouts.length === 1 ? "" : "s"} logged today. Keep listening to your body.` : "Your next step starts with showing up."}</p>
-          <button className="hero-button" type="button" disabled={Boolean(workoutError)} onClick={onWorkout}>
-            <span>{todaysWorkouts.length ? "Log another workout" : "Start a workout"}</span><span aria-hidden="true">→</span>
-          </button>
-        </div>
-        <div className="hero-mark" aria-hidden="true">
-          <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="44" /><path d="M37 62h46M60 39v46" /><circle cx="60" cy="60" r="56" /></svg>
-        </div>
-      </section>
       {workoutError && <p className="form-message is-error" role="alert">{workoutError}</p>}
       {data.error && <p className="form-message is-error" role="alert">{data.error}</p>}
 
-      <section className="dashboard-section" aria-labelledby="today-overview-title">
-        <div className="home-section-title">
-          <div><p className="eyebrow">A QUICK CHECK-IN</p><h2 id="today-overview-title">Today</h2></div>
+      <section className="home-rings glass-panel" aria-label="Today's progress">
+        <div className="ring-row">
+          <button type="button" onClick={() => onTab("workouts")} aria-label="View workouts this week">
+            <ProgressRing label="This week" value={workoutDays} total={3} color="var(--workout-accent)" />
+          </button>
+          <button type="button" onClick={() => onTab("habits")} aria-label="View habits completed today">
+            <ProgressRing label="Habits" value={completedHabits} total={activeHabits.length} color="var(--habit-accent)" />
+          </button>
+          <button type="button" onClick={() => onTab("diet")} aria-label="View calories today">
+            <ProgressRing label="Calories" value={Math.round(calories)} total={data.settings.calorieGoal} color="var(--diet-accent)" />
+          </button>
         </div>
-        <div className="dashboard-overview">
-          <button className="dashboard-overview-card" type="button" onClick={() => onTab("habits")}>
-            <span className="dashboard-card-label">Habits</span>
-            <strong>{completedHabits} / {activeHabits.length}</strong>
-            <small>{activeHabits.length ? "completed today" : "add your first habit"}</small>
-          </button>
-          <button className="dashboard-overview-card" type="button" onClick={() => onTab("diet")}>
-            <span className="dashboard-card-label">Calories</span>
-            <strong>{Math.round(calories)} <small>/ {data.settings.calorieGoal} kcal</small></strong>
-            <progress aria-label="Calories goal progress" max={data.settings.calorieGoal} value={Math.min(calories, data.settings.calorieGoal)} />
-            <small>{Math.round(protein)} / {data.settings.proteinGoal} g protein</small>
-            <progress aria-label="Protein goal progress" max={data.settings.proteinGoal} value={Math.min(protein, data.settings.proteinGoal)} />
-          </button>
-          <button className="dashboard-overview-card" type="button" onClick={() => onTab("diet")}>
-            <span className="dashboard-card-label">Water</span>
-            <strong>{water} <small>/ {data.settings.waterGoal} ml</small></strong>
-            <progress aria-label="Water goal progress" max={data.settings.waterGoal} value={Math.min(water, data.settings.waterGoal)} />
-            <small>logged today</small>
-          </button>
-          <button className="dashboard-overview-card" type="button" onClick={() => onTab("workouts")}>
-            <span className="dashboard-card-label">Workout</span>
-            <strong>{todaysWorkouts.length ? todaysWorkouts.length : "—"}</strong>
-            <small>{todaysWorkouts.length ? "logged today" : "nothing logged yet"}</small>
-          </button>
+      </section>
+
+      <section className="home-week-section" aria-labelledby="week-overview-title">
+        <SectionHeading title="This week" action="Workouts" onAction={() => onTab("workouts")} />
+        <div className="week-overview glass-panel" role="list" aria-label="Daily activity for the last seven days">
+          {week.map((day) => (
+            <div className="week-day" role="listitem" key={day.date} aria-label={`${day.day}: ${day.trained ? "workout" : "no workout"}, ${Math.round(day.habits * 100)} percent habits, ${Math.round(day.calories * 100)} percent calories`}>
+              <span>{day.day}</span>
+              <i className={day.trained ? "trained" : ""} aria-hidden="true" />
+              <span className="week-day-bars" aria-hidden="true">
+                <i className="habit-bar" style={{ "--bar-value": `${day.habits * 100}%` }} />
+                <i className="calorie-bar" style={{ "--bar-value": `${day.calories * 100}%` }} />
+              </span>
+            </div>
+          ))}
         </div>
       </section>
 
       <section className="home-section" aria-labelledby="week-summary-title">
-        <div className="home-section-title">
-          <div><p className="eyebrow">KEEP YOUR MOMENTUM</p><h2 id="week-summary-title">Your progress</h2></div>
-          <button type="button" className="quiet-link" onClick={() => onTab("workouts")}>See workouts</button>
-        </div>
-        <div className="summary-grid">
-          <Stat value={stats.totalWorkouts} label="Total workouts" />
-          <Stat value={stats.totalReps} label="Total reps" />
-          <Stat value={stats.bestStreak} label="Best streak" />
+        <SectionHeading title="Your progress" action="See all" onAction={() => onTab("workouts")} />
+        <div className="home-stats">
+          <Stat value={stats.bestStreak} label="Day streak" />
+          <Stat value={stats.totalWorkouts} label="Workouts" />
           <Stat value={stats.recordsThisMonth} label="PRs this month" />
         </div>
       </section>
-
-      <section className="dashboard-actions" aria-label="Quick actions">
-        <h2>Quick actions</h2>
-        <div className="dashboard-action-grid">
-          <button className="primary-button" type="button" disabled={Boolean(workoutError)} onClick={onWorkout}>+ Log workout</button>
-          <button className="secondary-button" type="button" onClick={() => onTab("habits")}>Check habits</button>
-          <button className="secondary-button" type="button" onClick={() => onTab("diet")}>Log a meal</button>
-          <button className="secondary-button" type="button" onClick={() => onTab("library")}>Find an exercise</button>
-          <button className="secondary-button" type="button" onClick={() => onTab("programs")}>Open programs</button>
-        </div>
-      </section>
-      <button className="library-prompt" type="button" onClick={() => onTab("library")}>
-        <span className="library-icon" aria-hidden="true">↗</span>
-        <span><strong>Need an idea?</strong><small>Explore the exercise library</small></span>
-        <span className="prompt-arrow" aria-hidden="true">›</span>
-      </button>
     </>
   );
 }
