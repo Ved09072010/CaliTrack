@@ -53,17 +53,30 @@ export function getSkillStates(workoutLog = [], masteryOverrides = []) {
   const workouts = Array.isArray(workoutLog) ? workoutLog : [];
   const manualMastery = masteredOverrides(masteryOverrides);
   const progress = new Map(SKILL_TREE.map((node) => [node.id, getBestSets(workouts, node)]));
-  const states = new Map();
+  const nodesById = new Map(SKILL_TREE.map((node) => [node.id, node]));
+  const masteredIds = new Set([
+    ...manualMastery,
+    ...SKILL_TREE
+      .filter((node) => progress.get(node.id).bestSetCount >= node.goal.sets)
+      .map((node) => node.id),
+  ]);
+
+  function includePrerequisites(nodeId) {
+    const node = nodesById.get(nodeId);
+    if (!node) return;
+    node.requires.forEach((requiredId) => {
+      if (masteredIds.has(requiredId)) return;
+      masteredIds.add(requiredId);
+      includePrerequisites(requiredId);
+    });
+  }
+
+  [...masteredIds].forEach(includePrerequisites);
 
   function getState(node) {
-    if (states.has(node.id)) return states.get(node.id);
     const { bestSetCount } = progress.get(node.id);
-    const mastered = manualMastery.has(node.id)
-      || bestSetCount >= node.goal.sets;
-    const prerequisitesMet = node.requires.every((id) => {
-      const prerequisite = SKILL_TREE.find((item) => item.id === id);
-      return prerequisite && getState(prerequisite).state === "mastered";
-    });
+    const mastered = masteredIds.has(node.id);
+    const prerequisitesMet = node.requires.every((id) => masteredIds.has(id));
     const state = mastered
       ? "mastered"
       : !prerequisitesMet
@@ -82,7 +95,6 @@ export function getSkillStates(workoutLog = [], masteryOverrides = []) {
         ? `Best ${details.bestValue} ${node.goal.type} of ${node.goal.target} · ${Math.min(details.bestSetCount, node.goal.sets)}/${node.goal.sets} sets`
         : `No sets yet · ${node.goal.target} ${node.goal.type}`,
     };
-    states.set(node.id, result);
     return result;
   }
 
@@ -92,6 +104,18 @@ export function getSkillStates(workoutLog = [], masteryOverrides = []) {
     .sort((left, right) => right.progress - left.progress)[0] || null;
 
   return { nodes, nextUp };
+}
+
+export function markExistingSkillsSeen(mastery, workoutLog) {
+  if (mastery.initialized) return mastery;
+  const alreadyMastered = getSkillStates(workoutLog, mastery).nodes
+    .filter((node) => node.state === "mastered")
+    .map((node) => node.id);
+  return {
+    ...mastery,
+    seen: [...new Set([...mastery.seen, ...alreadyMastered])],
+    initialized: true,
+  };
 }
 
 export function getNewlyMasteredSkill(previousWorkouts, workoutLog, masteryOverrides = []) {

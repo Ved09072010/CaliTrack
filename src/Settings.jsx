@@ -36,7 +36,7 @@ export default function Settings({ settings, storageError, onSaveSettings, onImp
         key,
         load(key, key === "settings"
           ? DEFAULT_SETTINGS
-          : key === "skillMastery" ? { mastered: [], seen: [] } : []),
+          : key === "skillMastery" ? { mastered: [], seen: [], initialized: false } : []),
       ]));
       const data = validateAppData(current);
       const backup = { version: 1, exportedAt: new Date().toISOString(), data };

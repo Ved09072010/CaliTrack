@@ -1,12 +1,12 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { load, save } from "../js/storage.js";
 import { PROGRESSIONS, EXERCISES } from "../data/exercises.js";
 import { SKILL_BRANCHES } from "../data/skillTree.js";
 import { normalizeSkillMastery } from "./appData.js";
-import { getSkillStates } from "./skillTree.js";
+import { getSkillStates, markExistingSkillsSeen } from "./skillTree.js";
 import { BottomSheet, Icon } from "./ui.jsx";
 
-const EMPTY_MASTERY = { mastered: [], seen: [] };
+const EMPTY_MASTERY = { mastered: [], seen: [], initialized: false };
 const STATE_LABELS = {
   locked: "Locked",
   available: "Available",
@@ -97,6 +97,11 @@ export default function SkillTree({ workouts, onLogExercise }) {
     return () => window.removeEventListener("resize", updateConnections);
   }, [nodesInBranch]);
 
+  useEffect(() => {
+    if (mastery.initialized || error) return;
+    updateMastery(markExistingSkillsSeen(mastery, workouts));
+  }, [mastery.initialized, error, workouts]);
+
   function updateMastery(next) {
     try {
       save("skillMastery", next);
@@ -169,7 +174,7 @@ export default function SkillTree({ workouts, onLogExercise }) {
         >
           <StatusMark state={node.state} />
           <span className="skill-node-copy">
-            <strong>{node.exercise}{node.state === "mastered" && !seen.has(node.id) && <small className="skill-new-marker">New</small>}</strong>
+            <strong>{node.exercise}{mastery.initialized && node.state === "mastered" && !seen.has(node.id) && <small className="skill-new-marker">New</small>}</strong>
             <small>{node.bestProgress}</small>
             <span className="skill-progress-track"><i style={{ "--skill-progress": `${node.progress * 100}%` }} /></span>
           </span>

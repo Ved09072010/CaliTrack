@@ -21,7 +21,7 @@ function getDashboardData() {
     const bodyStats = load("bodyStats", []);
     const favoriteFoods = load("favoriteFoods", []);
     const routines = load("customRoutines", []);
-    const skillMastery = load("skillMastery", { mastered: [], seen: [] });
+    const skillMastery = load("skillMastery", { mastered: [], seen: [], initialized: false });
     const savedSettings = load("settings", {});
     if (!savedSettings || typeof savedSettings !== "object" || Array.isArray(savedSettings)) {
       throw new Error("Saved nutrition goals have an invalid format. Open Diet to review them.");
@@ -42,7 +42,7 @@ function getDashboardData() {
     }
     return { habits, checks, meals, water, bodyStats, favoriteFoods, routines, skillMastery, settings, error: "" };
   } catch (error) {
-    return { habits: [], checks: [], meals: [], water: [], bodyStats: [], favoriteFoods: [], routines: [], skillMastery: { mastered: [], seen: [] }, settings: DEFAULT_GOALS, error: error.message };
+    return { habits: [], checks: [], meals: [], water: [], bodyStats: [], favoriteFoods: [], routines: [], skillMastery: { mastered: [], seen: [], initialized: false }, settings: DEFAULT_GOALS, error: error.message };
   }
 }
 

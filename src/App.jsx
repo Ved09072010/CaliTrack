@@ -75,7 +75,7 @@ function App() {
     if (!wasSavedWorkout || previous === current) return;
 
     try {
-      const mastery = normalizeSkillMastery(load("skillMastery", { mastered: [], seen: [] }));
+      const mastery = normalizeSkillMastery(load("skillMastery", { mastered: [], seen: [], initialized: false }));
       const newlyMastered = getNewlyMasteredSkill(previous, current, mastery);
       if (newlyMastered) setToastMessage(`Skill unlocked: ${newlyMastered.exercise}`);
     } catch (error) {

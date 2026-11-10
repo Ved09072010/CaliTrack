@@ -50,15 +50,17 @@ export function normalizeSettings(value) {
   return settings;
 }
 
-export function normalizeSkillMastery(value = { mastered: [], seen: [] }) {
+export function normalizeSkillMastery(value = { mastered: [], seen: [], initialized: false }) {
   if (!value || typeof value !== "object" || Array.isArray(value)
     || !Array.isArray(value.mastered) || !Array.isArray(value.seen)
+    || (value.initialized !== undefined && typeof value.initialized !== "boolean")
     || [...value.mastered, ...value.seen].some((id) => typeof id !== "string" || !SKILL_NODE_IDS.has(id))) {
     throw new Error("Skill mastery data must contain valid mastered and seen skill IDs.");
   }
   return {
     mastered: [...new Set(value.mastered)],
     seen: [...new Set(value.seen)],
+    initialized: value.initialized === true,
   };
 }
 
