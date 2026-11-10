@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { load, save } from "../js/storage.js";
 import { PROGRESSIONS, EXERCISES } from "../data/exercises.js";
 import { SKILL_BRANCHES } from "../data/skillTree.js";
+import { normalizeSkillMastery } from "./appData.js";
 import { getSkillStates } from "./skillTree.js";
 import { BottomSheet, Icon } from "./ui.jsx";
 
@@ -15,13 +16,7 @@ const STATE_LABELS = {
 
 function readMastery() {
   try {
-    const value = load("skillMastery", EMPTY_MASTERY);
-    if (!value || typeof value !== "object" || Array.isArray(value)
-      || !Array.isArray(value.mastered) || !Array.isArray(value.seen)
-      || [...value.mastered, ...value.seen].some((id) => typeof id !== "string")) {
-      throw new Error("Saved skill progress is invalid. Export a backup before resetting it.");
-    }
-    return { value: { mastered: [...new Set(value.mastered)], seen: [...new Set(value.seen)] }, error: "" };
+    return { value: normalizeSkillMastery(load("skillMastery", EMPTY_MASTERY)), error: "" };
   } catch (readError) {
     return { value: EMPTY_MASTERY, error: readError.message };
   }

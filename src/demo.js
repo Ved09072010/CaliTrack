@@ -22,6 +22,16 @@ const EXERCISES = [
   { name: "Hanging knee raise", base: 6, end: 15, mode: "reps" },
   { name: "Pike push-up", base: 5, end: 12, mode: "reps" },
 ];
+const SKILL_TREE_SESSIONS = [
+  { exercise: "Wall push-up", daysAgo: 7, reps: [12, 12, 12] },
+  { exercise: "Incline push-up", daysAgo: 5, reps: [10, 10, 10] },
+  { exercise: "Bodyweight squat", daysAgo: 6, reps: [12, 12, 12] },
+  { exercise: "Reverse lunge", daysAgo: 4, reps: [8, 8, 8] },
+  { exercise: "Dead hang", daysAgo: 10, seconds: [20, 20, 20] },
+  { exercise: "Scapular pull-up", daysAgo: 9, reps: [8, 8, 8] },
+  { exercise: "Negative pull-up", daysAgo: 8, reps: [8, 7, 6] },
+  { exercise: "Bird dog", daysAgo: 3, reps: [8, 6] },
+];
 const FOODS = [
   { name: "Greek yogurt oats", mealType: "Breakfast", calories: 430, protein: 28, carbs: 55, fat: 10 },
   { name: "Paneer lentil bowl", mealType: "Lunch", calories: 620, protein: 34, carbs: 68, fat: 20 },
@@ -74,7 +84,19 @@ function makeWorkoutRecords(random) {
       });
     });
   }
-  return records;
+  const skillRecords = SKILL_TREE_SESSIONS.map((session, index) => ({
+    id: `${DEMO_PREFIX}skill_workout_${index}`,
+    date: dateAgo(session.daysAgo),
+    time: "08:00",
+    exercise: session.exercise,
+    sets: (session.reps || session.seconds).map((value) => ({
+      reps: session.reps ? value : 0,
+      seconds: session.seconds ? value : 0,
+      weight: 0,
+    })),
+    notes: "",
+  }));
+  return [...records, ...skillRecords];
 }
 
 function makeHabitRecords(random) {

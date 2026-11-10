@@ -1,5 +1,6 @@
 import { DEFAULT_SETTINGS } from "./settingsData.js";
 import { EXERCISES } from "../data/exercises.js";
+import { SKILL_TREE } from "../data/skillTree.js";
 
 export const APP_DATA_KEYS = [
   "workoutLog",
@@ -11,8 +12,10 @@ export const APP_DATA_KEYS = [
   "water",
   "settings",
   "customRoutines",
+  "skillMastery",
 ];
 
+const SKILL_NODE_IDS = new Set(SKILL_TREE.map((node) => node.id));
 const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner", "Snack"];
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -47,19 +50,31 @@ export function normalizeSettings(value) {
   return settings;
 }
 
+export function normalizeSkillMastery(value = { mastered: [], seen: [] }) {
+  if (!value || typeof value !== "object" || Array.isArray(value)
+    || !Array.isArray(value.mastered) || !Array.isArray(value.seen)
+    || [...value.mastered, ...value.seen].some((id) => typeof id !== "string" || !SKILL_NODE_IDS.has(id))) {
+    throw new Error("Skill mastery data must contain valid mastered and seen skill IDs.");
+  }
+  return {
+    mastered: [...new Set(value.mastered)],
+    seen: [...new Set(value.seen)],
+  };
+}
+
 export function validateAppData(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error("Backup data must be a JSON object.");
   }
-  const missingKeys = APP_DATA_KEYS.filter((key) => !Object.hasOwn(value, key));
+  const missingKeys = APP_DATA_KEYS.filter((key) => key !== "skillMastery" && !Object.hasOwn(value, key));
   if (missingKeys.length) {
     throw new Error(`Backup is missing data: ${missingKeys.join(", ")}.`);
   }
-  if (APP_DATA_KEYS.some((key) => key !== "settings" && !Array.isArray(value[key]))) {
+  if (APP_DATA_KEYS.some((key) => key !== "settings" && key !== "skillMastery" && !Array.isArray(value[key]))) {
     throw new Error("Every saved record group in a backup must be a list.");
   }
   const settings = normalizeSettings(value.settings);
-  const data = { ...value, settings };
+  const data = { ...value, settings, skillMastery: normalizeSkillMastery(value.skillMastery) };
 
   if (data.workoutLog.some((item) => (
     !item
