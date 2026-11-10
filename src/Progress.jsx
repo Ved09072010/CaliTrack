@@ -21,10 +21,11 @@ function chartOptions(theme) {
     maintainAspectRatio: false,
     color: colors.muted,
     scales: {
-      y: { beginAtZero: true, ticks: { color: colors.muted }, grid: { color: colors.grid } },
-      x: { ticks: { color: colors.muted }, grid: { color: colors.grid } },
+      y: { beginAtZero: true, ticks: { color: colors.muted, maxTicksLimit: 4 }, grid: { color: colors.grid, drawBorder: false } },
+      x: { ticks: { color: colors.muted, maxTicksLimit: 5 }, grid: { display: false } },
     },
-    plugins: { legend: { labels: { color: colors.text } } },
+    interaction: { intersect: false, mode: "index" },
+    plugins: { legend: { labels: { color: colors.text, usePointStyle: true, boxWidth: 8 } } },
   };
 }
 
@@ -53,22 +54,35 @@ function ExerciseProgress({ workouts, units, theme }) {
     const dates = [...points.keys()];
     const values = [...points.values()];
     const colors = getChartTheme(theme);
+    const context = canvasRef.current.getContext("2d");
+    const fill = context.createLinearGradient(0, 0, 0, 220);
+    fill.addColorStop(0, `${colors.accent}55`);
+    fill.addColorStop(1, `${colors.accent}00`);
     const chart = new window.Chart(canvasRef.current, {
-      type: "line",
+      type: "bar",
       data: {
         labels: dates.map(formatDate),
         datasets: [
           {
+            type: "line",
             label: isHold ? "Best hold (sec)" : "Best reps",
             data: values.map((point) => point.best),
             borderColor: colors.accent,
-            backgroundColor: colors.accent,
+            backgroundColor: fill,
+            fill: true,
+            tension: 0.36,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            borderWidth: 2,
           },
           ...(!isHold ? [{
+            type: "bar",
             label: `Volume (reps × ${units === "imperial" ? "lb" : "kg"})`,
             data: values.map((point) => point.volume * (units === "imperial" ? 1 / 0.45359237 : 1)),
-            borderColor: colors.secondary,
             backgroundColor: colors.secondary,
+            borderRadius: 7,
+            barPercentage: 0.58,
+            categoryPercentage: 0.72,
             yAxisID: "y1",
           }] : []),
         ],
@@ -77,7 +91,7 @@ function ExerciseProgress({ workouts, units, theme }) {
         ...chartOptions(theme),
         scales: {
           ...chartOptions(theme).scales,
-          y1: { beginAtZero: true, position: "right", grid: { drawOnChartArea: false } },
+          y1: { beginAtZero: true, position: "right", ticks: { color: colors.muted, maxTicksLimit: 4 }, grid: { display: false, drawBorder: false } },
         },
       },
     });
@@ -89,13 +103,11 @@ function ExerciseProgress({ workouts, units, theme }) {
     <details className="progress-disclosure" onToggle={(event) => setExpanded(event.currentTarget.open)}>
       <summary>Exercise progress</summary>
       <div className="disclosure-content">
-        <label className="field">
-          <span>Exercise</span>
-          <select id="progress-exercise" aria-label="Choose an exercise to see progress" value={selected} onChange={(event) => setSelected(event.target.value)} disabled={exercises.length === 0}>
-            <option value="">Choose an exercise</option>
-            {exercises.map((exercise) => <option key={exercise}>{exercise}</option>)}
-          </select>
-        </label>
+        <div className="exercise-chips" role="group" aria-label="Choose an exercise to see progress">
+          {exercises.map((exercise) => (
+            <button className={`quick-chip${selected === exercise ? " is-selected" : ""}`} type="button" aria-pressed={selected === exercise} key={exercise} onClick={() => setSelected(exercise)}>{exercise}</button>
+          ))}
+        </div>
         {records.length > 0 && chartAvailable
           ? <div className="progress-card"><canvas id="exercise-chart" ref={canvasRef} role="img" aria-label="Exercise performance chart" /></div>
           : <p className="muted">{records.length === 0 ? "Log workouts to see exercise progress here." : "The chart needs an internet connection to load."}</p>}
@@ -126,15 +138,18 @@ function BodyWeightProgress({ units, theme }) {
           label: `Weight (${units === "imperial" ? "lb" : "kg"})`,
           data: sortedStats.map((item) => fromKilograms(item.weightKg, units)),
           borderColor: colors.accent,
-          backgroundColor: colors.accent,
-          tension: 0.25,
+          backgroundColor: `${colors.accent}26`,
+          fill: true,
+          tension: 0.36,
+          pointRadius: 3,
+          pointHoverRadius: 5,
         }],
       },
       options: {
         ...chartOptions(theme),
         scales: {
           ...chartOptions(theme).scales,
-          y: { beginAtZero: false, ticks: { color: colors.muted }, grid: { color: colors.grid } },
+          y: { beginAtZero: false, ticks: { color: colors.muted, maxTicksLimit: 4 }, grid: { color: colors.grid, drawBorder: false } },
         },
       },
     });

@@ -207,7 +207,7 @@ function WorkoutTimer() {
   );
 }
 
-export default function Programs({ onStartRoutine }) {
+export default function Programs({ onStartRoutine, view = "Programs" }) {
   const [saved, setSaved] = useState(readSavedRoutines);
   const [name, setName] = useState("");
   const [selectedExercise, setSelectedExercise] = useState(EXERCISES[0] || "");
@@ -269,23 +269,19 @@ export default function Programs({ onStartRoutine }) {
 
   return (
     <>
-      <div className="page-heading">
-        <p className="eyebrow">PLAN &amp; PRACTISE</p>
-        <h1>Programs &amp; timers</h1>
-        <p className="intro">Pick a routine, then start with its first exercise already in your workout logger.</p>
-      </div>
+      {view === "Programs" && <>
+      <p className="program-intro">Ready-made and custom routines.</p>
       {saved.error && <p className="form-message is-error" role="alert">{saved.error}</p>}
       <section className="program-section" aria-labelledby="built-in-programs-title">
         <h2 id="built-in-programs-title">Ready-made routines</h2>
-        <p className="muted">Choose a level and work at a pace that feels comfortable.</p>
         <div className="routine-list">
           {BUILT_IN_ROUTINES.map((routine) => (
             <RoutineCard routine={routine} onStart={onStartRoutine} key={routine.id} />
           ))}
         </div>
       </section>
-      <section className="program-section" aria-labelledby="custom-routine-title">
-        <h2 id="custom-routine-title">Build your own routine</h2>
+      <details className="progress-disclosure custom-routine-disclosure">
+        <summary>Build a routine</summary>
         {!saved.error ? (
           <form className="custom-routine-form" noValidate onSubmit={saveRoutine}>
             <label className="field">
@@ -316,7 +312,7 @@ export default function Programs({ onStartRoutine }) {
             {message && <p className={`form-message${isError ? " is-error" : ""}`} role={isError ? "alert" : "status"}>{message}</p>}
           </form>
         ) : <p className="muted">Custom routines are unavailable until the saved routine data is fixed.</p>}
-      </section>
+      </details>
       {customRoutines.length > 0 && (
         <section className="program-section" aria-labelledby="saved-routines-title">
           <h2 id="saved-routines-title">Your routines</h2>
@@ -327,7 +323,8 @@ export default function Programs({ onStartRoutine }) {
           </div>
         </section>
       )}
-      <WorkoutTimer />
+      </>}
+      {view === "Timer" && <WorkoutTimer />}
     </>
   );
 }

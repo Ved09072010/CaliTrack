@@ -6,8 +6,6 @@ import Dashboard from "./Dashboard.jsx";
 import Diet from "./Diet.jsx";
 import Habits from "./Habits.jsx";
 import Library from "./Library.jsx";
-import Programs from "./Programs.jsx";
-import Progress from "./Progress.jsx";
 import Settings from "./Settings.jsx";
 import { DEFAULT_SETTINGS } from "./settingsData.js";
 import Workouts from "./Workouts.jsx";
@@ -18,8 +16,6 @@ const TABS = [
   { id: "habits", label: "Habits", icon: <><path d="m5 12 4 4L19 6" /><circle cx="12" cy="12" r="10" /></> },
   { id: "diet", label: "Diet", icon: <path d="M12 3s7 7.2 7 12a7 7 0 0 1-14 0c0-4.8 7-12 7-12z" /> },
   { id: "library", label: "Library", icon: <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 1 4 17.5zM4 17.5A2.5 2.5 0 0 1 6.5 15H20M8 7h8m-8 4h8" /> },
-  { id: "programs", label: "Programs", icon: <path d="M4 5h16M4 12h16M4 19h16M8 3v4m8 3v4m-5 3v4" /> },
-  { id: "settings", label: "Settings", icon: <><circle cx="12" cy="12" r="3" /><path d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 0 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 0 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 0 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9z" /></> },
 ];
 
 function initialWorkoutData() {
@@ -51,7 +47,7 @@ function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = settingsData.settings.theme;
     document.querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", settingsData.settings.theme === "light" ? "#f8fafc" : "#111827");
+      ?.setAttribute("content", settingsData.settings.theme === "light" ? "#f6f0e6" : "#0e0d0c");
   }, [settingsData.settings.theme]);
 
   useEffect(() => {
@@ -132,7 +128,7 @@ function App() {
   }
 
   return (
-    <div className="app-shell" data-theme={settingsData.settings.theme}>
+    <div className="app-shell" data-theme={settingsData.settings.theme} data-active-tab={activeTab}>
       <main id="main-content">
         {!isOnline && <p className="offline-notice" role="status">Offline mode · Your saved data stays on this device.</p>}
         <section id="panel-home" className="tab-panel" role="tabpanel" aria-labelledby="tab-home" tabIndex="-1" hidden={activeTab !== "home"}>
@@ -158,12 +154,8 @@ function App() {
             activeRoutine={activeRoutine}
             onLogRoutineExercise={logRoutineExercise}
             units={settingsData.settings.units}
-          />
-          <Progress
-            key={`progress-${dataVersion}`}
-            workouts={workoutData.workouts}
-            units={settingsData.settings.units}
             theme={settingsData.settings.theme}
+            onStartRoutine={startRoutine}
           />
         </section>
 
@@ -183,11 +175,7 @@ function App() {
           <Library onLogExercise={logLibraryExercise} />
         </section>
 
-        <section id="panel-programs" className="tab-panel" role="tabpanel" aria-labelledby="tab-programs" tabIndex="-1" hidden={activeTab !== "programs"}>
-          <Programs key={`programs-${dataVersion}`} onStartRoutine={startRoutine} />
-        </section>
-
-        <section id="panel-settings" className="tab-panel" role="tabpanel" aria-labelledby="tab-settings" tabIndex="-1" hidden={activeTab !== "settings"}>
+        <section id="panel-settings" className="tab-panel" role="tabpanel" aria-label="Settings and backup" tabIndex="-1" hidden={activeTab !== "settings"}>
           <Settings
             settings={settingsData.settings}
             storageError={settingsData.error}
