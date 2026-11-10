@@ -79,7 +79,7 @@ export default function Dashboard({ workouts, workoutError, active, onWorkout, o
       <div className="home-header">
         <div className="page-heading">
           <p className="eyebrow">{todayLabel}</p>
-          <h1>Move with purpose.</h1>
+          <h1>Today</h1>
         </div>
         <IconButton label="Open settings and backup" onClick={onSettings}>
           <Icon name="settings" />

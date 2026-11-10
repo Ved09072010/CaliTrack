@@ -151,7 +151,6 @@ function WorkoutTimer() {
   return (
     <section className="program-section" aria-labelledby="timer-title">
       <h2 id="timer-title">Workout timers</h2>
-      <p className="muted">Use a simple rest, countdown, hold, or EMOM timer.</p>
       <SegmentedControl label="Timer type" options={TIMER_MODES} value={mode} onChange={chooseMode} />
       {mode === "EMOM" ? (
         <label className="field timer-input">
