@@ -53,11 +53,23 @@ function dateAgo(daysAgo) {
   return todayString(date);
 }
 
+function scheduleForWeek(week) {
+  return week === 5 ? [1, 5] : [1, 2, 4, 6];
+}
+
+function scheduledDay(daysAgo) {
+  const week = Math.floor(daysAgo / 7);
+  const offset = daysAgo % 7;
+  const schedule = scheduleForWeek(week);
+  return week * 7 + schedule.reduce((closest, day) => (
+    Math.abs(day - offset) < Math.abs(closest - offset) ? day : closest
+  ), schedule[0]);
+}
+
 function makeWorkoutRecords(random) {
   const records = [];
-  const schedule = [1, 2, 4, 6];
   for (let week = 0; week < 12; week += 1) {
-    const sessions = week === 5 ? [1, 5] : schedule;
+    const sessions = scheduleForWeek(week);
     sessions.forEach((day, sessionIndex) => {
       const daysAgo = week * 7 + day;
       const exercise = EXERCISES[(week * 2 + sessionIndex * 3) % EXERCISES.length];
@@ -86,7 +98,7 @@ function makeWorkoutRecords(random) {
   }
   const skillRecords = SKILL_TREE_SESSIONS.map((session, index) => ({
     id: `${DEMO_PREFIX}skill_workout_${index}`,
-    date: dateAgo(session.daysAgo),
+    date: dateAgo(scheduledDay(session.daysAgo)),
     time: "08:00",
     exercise: session.exercise,
     sets: (session.reps || session.seconds).map((value) => ({
