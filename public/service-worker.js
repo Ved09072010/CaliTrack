@@ -19,6 +19,18 @@ self.addEventListener("install", (event) => {
       appUrl("icons/calitrack-512.png"),
       appUrl("icons/apple-touch-icon.png"),
     ]);
+    const assetManifestUrl = appUrl("asset-manifest.json");
+    const manifestResponse = await fetch(assetManifestUrl);
+    if (!manifestResponse.ok) {
+      throw new Error("Could not load the asset manifest for offline caching.");
+    }
+    const manifest = await manifestResponse.json();
+    const buildAssets = [...new Set(Object.values(manifest).flatMap((entry) => [
+      entry.file,
+      ...(entry.css || []),
+    ]))].map((asset) => new URL(asset, shellUrl).href);
+    await cache.add(assetManifestUrl);
+    await cache.addAll(buildAssets);
     const shell = await cache.match(shellUrl);
     const shellText = await shell.text();
     const assets = [...shellText.matchAll(/(?:src|href)="([^"]+\.(?:js|css))"/g)]

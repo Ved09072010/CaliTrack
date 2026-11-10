@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import Chart from "chart.js/auto";
 import { save } from "../js/storage.js";
 import { formatDate, readList } from "./data.js";
 import { todayString } from "../js/utils.js";
@@ -7,6 +6,7 @@ import { fromKilograms, toKilograms } from "./settingsData.js";
 import { getChartTheme } from "./chartTheme.js";
 import SummaryCards from "./SummaryCards.jsx";
 import { BottomSheet, Icon, IconButton } from "./ui.jsx";
+import { createChart } from "./chartLoader.js";
 
 function initialBodyData() {
   try {
@@ -33,6 +33,7 @@ function chartOptions(theme) {
 
 function ExerciseProgress({ workouts, units, theme }) {
   const [selected, setSelected] = useState("");
+  const [chartError, setChartError] = useState("");
   const canvasRef = useRef(null);
   const exercises = [...new Set(workouts.map((workout) => workout.exercise))].sort();
   const selectedExercise = selected || exercises[0] || "";
@@ -60,7 +61,7 @@ function ExerciseProgress({ workouts, units, theme }) {
     const fill = context.createLinearGradient(0, 0, 0, 220);
     fill.addColorStop(0, `${colors.accent}55`);
     fill.addColorStop(1, `${colors.accent}00`);
-    const chart = new Chart(canvasRef.current, {
+    const config = {
       type: "bar",
       data: {
         labels: dates.map(formatDate),
@@ -96,8 +97,22 @@ function ExerciseProgress({ workouts, units, theme }) {
           y1: { beginAtZero: true, position: "right", ticks: { color: colors.muted, maxTicksLimit: 4 }, grid: { display: false, drawBorder: false } },
         },
       },
-    });
-    return () => chart.destroy();
+    };
+    let disposed = false;
+    let chart;
+    setChartError("");
+    createChart(canvasRef.current, config)
+      .then((createdChart) => {
+        if (disposed) createdChart.destroy();
+        else chart = createdChart;
+      })
+      .catch((error) => {
+        if (!disposed) setChartError(`Chart could not be loaded: ${error.message}`);
+      });
+    return () => {
+      disposed = true;
+      chart?.destroy();
+    };
   }, [records, isHold, units, theme]);
 
   return (
@@ -109,7 +124,7 @@ function ExerciseProgress({ workouts, units, theme }) {
         ))}
       </div>}
       {records.length > 0
-        ? <div className="progress-card"><canvas id="exercise-chart" ref={canvasRef} role="img" aria-label="Exercise performance chart" /></div>
+        ? <><div className="progress-card"><canvas id="exercise-chart" ref={canvasRef} role="img" aria-label="Exercise performance chart" /></div>{chartError && <p className="form-message is-error" role="alert">{chartError}</p>}</>
         : <p className="muted">Log workouts to see progress.</p>}
     </section>
   );
@@ -122,6 +137,7 @@ function BodyWeightProgress({ units, theme }) {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(Boolean(bodyData.error));
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [chartError, setChartError] = useState("");
   const canvasRef = useRef(null);
   const stats = bodyData.stats;
   const sortedStats = useMemo(() => [...stats].sort((a, b) => a.date.localeCompare(b.date)), [stats]);
@@ -129,7 +145,7 @@ function BodyWeightProgress({ units, theme }) {
   useEffect(() => {
     if (!sortedStats.length || !canvasRef.current) return undefined;
     const colors = getChartTheme(theme);
-    const chart = new Chart(canvasRef.current, {
+    const config = {
       type: "line",
       data: {
         labels: sortedStats.map((item) => formatDate(item.date)),
@@ -151,8 +167,22 @@ function BodyWeightProgress({ units, theme }) {
           y: { beginAtZero: false, ticks: { color: colors.muted, maxTicksLimit: 4 }, grid: { color: colors.grid, drawBorder: false } },
         },
       },
-    });
-    return () => chart.destroy();
+    };
+    let disposed = false;
+    let chart;
+    setChartError("");
+    createChart(canvasRef.current, config)
+      .then((createdChart) => {
+        if (disposed) createdChart.destroy();
+        else chart = createdChart;
+      })
+      .catch((error) => {
+        if (!disposed) setChartError(`Chart could not be loaded: ${error.message}`);
+      });
+    return () => {
+      disposed = true;
+      chart?.destroy();
+    };
   }, [sortedStats, units, theme]);
 
   function submit(event) {
@@ -188,6 +218,7 @@ function BodyWeightProgress({ units, theme }) {
         {sortedStats.length > 0
           ? <div className="progress-card"><canvas id="body-weight-chart" ref={canvasRef} role="img" aria-label="Body weight history chart" /></div>
           : <p className="muted">Log weight to see your trend.</p>}
+        {chartError && <p className="form-message is-error" role="alert">{chartError}</p>}
         {message && <p id="body-stats-message" className={`form-message${isError ? " is-error" : ""}`} role={isError ? "alert" : "status"}>{message}</p>}
       </div>
       <BottomSheet open={sheetOpen} title="Body weight" onClose={() => setSheetOpen(false)}>

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import Chart from "chart.js/auto";
 import { createId, formatDate, todayString } from "../js/utils.js";
 import { load, save } from "../js/storage.js";
 import { BottomSheet, Icon, IconButton, QuickChips, SegmentedControl } from "./ui.jsx";
 import { getChartTheme } from "./chartTheme.js";
+import { createChart } from "./chartLoader.js";
 
 const DEFAULT_GOALS = { calorieGoal: 2000, proteinGoal: 100, waterGoal: 2000 };
 const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner", "Snack"];
@@ -41,6 +41,7 @@ function dateAgo(daysAgo) {
 
 function WeeklyNutritionChart({ meals, theme }) {
   const canvasRef = useRef(null);
+  const [chartError, setChartError] = useState("");
   const chartData = useMemo(() => {
     const daily = new Map();
     meals.forEach((meal) => {
@@ -64,7 +65,7 @@ function WeeklyNutritionChart({ meals, theme }) {
     const fill = context.createLinearGradient(0, 0, 0, 220);
     fill.addColorStop(0, `${colors.accent}cc`);
     fill.addColorStop(1, `${colors.accent}40`);
-    const chart = new Chart(canvasRef.current, {
+    const config = {
       type: "bar",
       data: {
         labels: chartData.labels,
@@ -84,12 +85,26 @@ function WeeklyNutritionChart({ meals, theme }) {
         },
         plugins: { legend: { labels: { color: colors.text } } },
       },
-    });
-    return () => chart.destroy();
+    };
+    let disposed = false;
+    let chart;
+    setChartError("");
+    createChart(canvasRef.current, config)
+      .then((createdChart) => {
+        if (disposed) createdChart.destroy();
+        else chart = createdChart;
+      })
+      .catch((error) => {
+        if (!disposed) setChartError(`Chart could not be loaded: ${error.message}`);
+      });
+    return () => {
+      disposed = true;
+      chart?.destroy();
+    };
   }, [chartData, meals.length, theme]);
 
   return meals.length
-    ? <div className="progress-card"><canvas ref={canvasRef} role="img" aria-label="Weekly calories and protein chart" /></div>
+    ? <><div className="progress-card"><canvas ref={canvasRef} role="img" aria-label="Weekly calories and protein chart" /></div>{chartError && <p className="form-message is-error" role="alert">{chartError}</p>}</>
     : <p className="empty-line">Log meals to see your week.</p>;
 }
 
