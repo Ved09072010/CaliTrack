@@ -841,6 +841,24 @@ button:not(:disabled):active { transform: scale(.98); }
 .archived-habit { min-height: 48px; }
 .exercise-list > :nth-child(n+6) { display: none; }
 .habit-actions { display: none; }
+.library-controls { display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: end; gap: 8px; }
+.library-controls .field { min-width: 0; }
+.library-search-field { margin-top: 10px; }
+.exercise-list { margin-top: 10px; }
+.exercise-row, .progression-row { display: grid; width: 100%; grid-template-columns: minmax(0, 1fr) 20px; align-items: center; gap: 10px; min-height: 60px; padding: 8px 4px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+.exercise-row-copy, .progression-row > span { display: grid; min-width: 0; gap: 3px; }
+.exercise-row-copy strong, .progression-row strong { overflow: hidden; font-size: .92rem; text-overflow: ellipsis; white-space: nowrap; }
+.exercise-row-copy small, .progression-row small { overflow: hidden; color: var(--muted); font-size: .76rem; text-overflow: ellipsis; white-space: nowrap; }
+.exercise-row > svg, .progression-row > svg { width: 18px; height: 18px; color: var(--muted); }
+.progression-list { display: grid; }
+.exercise-meta { margin: 0; color: var(--muted); font-size: .82rem; }
+.exercise-details details { padding: 5px 0; }
+.exercise-details ol, .exercise-details ul { display: grid; gap: 8px; padding-left: 20px; }
+.progression-steps { display: grid; gap: 12px; margin: 0; padding-left: 24px; }
+.progression-steps li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; }
+.progression-steps li strong, .progression-steps li span { grid-column: 1; }
+.progression-steps li span { color: var(--muted); font-size: .8rem; }
+.progression-steps li button { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
 .diet-section,
 .habit-today-summary,
 .habit-streak-hero,
