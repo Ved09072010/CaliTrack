@@ -789,6 +789,8 @@ button:not(:disabled):active { transform: scale(.98); }
 .home-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
 .home-stats .dashboard-stat { padding: 13px 10px; }
 .home-stats .dashboard-stat strong { color: var(--workout-accent); font-size: 1.35rem; }
+.skill-home-summary { display: grid; gap: 5px; margin-top: 10px; padding: 12px 4px 2px; border-top: 1px solid var(--line); font-size: .84rem; }
+.skill-home-summary > span { color: var(--muted); font-size: .76rem; }
 
 @keyframes ring-fill {
   from { stroke-dashoffset: 245.04; }

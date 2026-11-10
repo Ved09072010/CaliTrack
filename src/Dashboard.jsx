@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { todayString } from "../js/utils.js";
 import { load } from "../js/storage.js";
 import { getDashboardStats } from "./dashboardStats.js";
+import { getSkillStates } from "./skillTree.js";
 import { Icon, IconButton, ProgressRing, SectionHeading } from "./ui.jsx";
 
 const DEFAULT_GOALS = {
@@ -20,12 +21,15 @@ function getDashboardData() {
     const bodyStats = load("bodyStats", []);
     const favoriteFoods = load("favoriteFoods", []);
     const routines = load("customRoutines", []);
+    const skillMastery = load("skillMastery", { mastered: [], seen: [] });
     const savedSettings = load("settings", {});
     if (!savedSettings || typeof savedSettings !== "object" || Array.isArray(savedSettings)) {
       throw new Error("Saved nutrition goals have an invalid format. Open Diet to review them.");
     }
     const settings = { ...DEFAULT_GOALS, ...savedSettings };
     if (![habits, checks, meals, water, bodyStats, favoriteFoods, routines].every(Array.isArray)
+      || !skillMastery || typeof skillMastery !== "object" || Array.isArray(skillMastery)
+      || !Array.isArray(skillMastery.mastered) || !Array.isArray(skillMastery.seen)
       || !settings
       || Object.keys(DEFAULT_GOALS).some((key) => !Number.isFinite(settings[key]) || settings[key] <= 0)) {
       throw new Error("Saved dashboard data has an invalid format. Open each tracker to review its saved data.");
@@ -36,9 +40,9 @@ function getDashboardData() {
       || water.some((entry) => !entry || typeof entry.date !== "string" || !Number.isFinite(entry.ml) || entry.ml < 0)) {
       throw new Error("Some saved tracker entries are invalid. Open the relevant tab to review its data.");
     }
-    return { habits, checks, meals, water, bodyStats, favoriteFoods, routines, settings, error: "" };
+    return { habits, checks, meals, water, bodyStats, favoriteFoods, routines, skillMastery, settings, error: "" };
   } catch (error) {
-    return { habits: [], checks: [], meals: [], water: [], bodyStats: [], favoriteFoods: [], routines: [], settings: DEFAULT_GOALS, error: error.message };
+    return { habits: [], checks: [], meals: [], water: [], bodyStats: [], favoriteFoods: [], routines: [], skillMastery: { mastered: [], seen: [] }, settings: DEFAULT_GOALS, error: error.message };
   }
 }
 
@@ -61,6 +65,8 @@ export default function Dashboard({ workouts, workoutError, active, onWorkout, o
   const todaysMeals = data.meals.filter((meal) => meal.date === today);
   const calories = todaysMeals.reduce((total, meal) => total + meal.calories, 0);
   const stats = getDashboardStats(workouts, today);
+  const skills = getSkillStates(workouts, data.skillMastery);
+  const masteredSkills = skills.nodes.filter((node) => node.state === "mastered").length;
   const week = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(`${today}T12:00:00`);
     date.setDate(date.getDate() - (6 - index));
@@ -134,6 +140,10 @@ export default function Dashboard({ workouts, workoutError, active, onWorkout, o
           <Stat value={stats.currentStreak} label="Day streak" />
           <Stat value={stats.totalWorkouts} label="Workouts" />
           <Stat value={stats.recordsThisMonth} label="PRs this month" />
+        </div>
+        <div className="skill-home-summary">
+          <strong>Skills mastered {masteredSkills} / {skills.nodes.length}</strong>
+          <span>Next up: {skills.nextUp?.exercise || "All skills mastered"}</span>
         </div>
       </details>
 
