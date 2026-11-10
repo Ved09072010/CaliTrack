@@ -21,7 +21,7 @@ Application/Storage panels. The build should complete without errors.
 
 - [ ] Open each bottom-navigation tab and confirm only its selected panel is shown.
 - [ ] Use Tab/Shift+Tab and arrow/Home/End keys to navigate tabs; confirm visible focus.
-- [ ] Check the empty dashboard on a new profile and follow each quick action.
+- [ ] Check the empty dashboard on a new profile; load sample data or choose Start fresh and confirm the prompt does not return.
 - [ ] Check the bottom navigation and page content at 320px, 375px, 424px, tablet, and desktop widths.
 
 ### Phase 2 — Storage
@@ -46,7 +46,7 @@ Application/Storage panels. The build should complete without errors.
 - [ ] Open an exercise chart and confirm its series and labels match the selected exercise.
 - [ ] Log body weight and confirm the weight trend chart updates.
 - [ ] Switch metric/imperial units and confirm displayed weights convert while saved values remain in kilograms.
-- [ ] With Chart.js unavailable, confirm chart areas explain the limitation without blocking tracking.
+- [ ] In offline mode, confirm bundled Chart.js renders charts without a CDN request.
 
 ### Phase 5 — Habits
 
@@ -88,19 +88,24 @@ Application/Storage panels. The build should complete without errors.
 ### Phase 10 — Settings and backup
 
 - [ ] Change theme, units, and each goal; refresh and confirm preferences persist across tabs.
+- [ ] Set weekly workout goal to a non-default number and confirm the Home ring uses it.
+- [ ] Set Theme to System, switch the browser's color preference, and confirm the app and charts follow it.
 - [ ] Export all data and check the downloaded JSON contains the saved groups.
 - [ ] Import a valid backup in a disposable profile and confirm all groups are restored.
 - [ ] Try invalid JSON, an unsupported backup version, invalid field values, and a file over 5 MB; confirm clear errors and that existing data is not replaced.
 - [ ] Test reset only after exporting a backup; cancel once, then confirm reset in a disposable profile.
 - [ ] Confirm the reset clears saved records and restores default settings.
+- [ ] Load and remove demo data; confirm the real records, theme, and goals are unchanged.
+- [ ] Export and restore a backup containing demo records, then remove the restored demo data.
+- [ ] Reload demo data in a clean profile twice and compare the generated records for determinism.
 
 ### Phase 11 — PWA and offline
 
 - [ ] Serve the production build over localhost or HTTPS; confirm the manifest and icon load and the browser offers installation.
-- [ ] Open once online; in DevTools confirm the service worker is active and the `calitrack-v1` cache contains the app shell and static assets.
+- [ ] Open once online; in DevTools confirm the service worker is active and its cache contains the app shell, hashed JS/CSS, manifest, and PNG icons.
 - [ ] Go offline and reload; confirm the app opens, saved tracking data remains available, and the offline notice appears.
-- [ ] Confirm Charts explain when Chart.js is unavailable offline.
-- [ ] Increment `CACHE_VERSION`, deploy an update, and confirm the new worker replaces the old cache.
+- [ ] Confirm page navigation is network-first with a cache fallback and hashed JS/CSS are cache-first.
+- [ ] Deploy an updated hashed build and confirm the service worker picks up the new page and assets.
 
 ### Phase 12 — Release checks
 
@@ -112,9 +117,11 @@ Application/Storage panels. The build should complete without errors.
 
 ## Verification record
 
-- Latest browser smoke run (local development page): all seven tabs opened; no horizontal overflow at 320, 375, 424, 768, or 1280 px; arrow/Home/End tab navigation worked. Workout validation and logging, habit completion, meal totals/favorite selection, water increment/decrement, exercise search/filter/no-results and direct logging, built-in/custom routines, timer completion, settings persistence, backup import/error/reset/export feedback, corrupt-storage messaging, and offline app loading were exercised. Temporary records and settings were restored.
-- Browser errors: no uncaught application page errors. The offline simulation also produced Vite HMR WebSocket errors, which are development-server noise; offline/PWA verification still needs to be repeated against a production preview.
-- Build and dependencies: an earlier production build passed with Vite 8.3.7. The latest `npm run build` could not run because `vite` is unavailable; `npm ls` also reports missing React dependencies and an invalid Vite installation. A previous `npm ci` was blocked by `EPERM` while unlinking a native Vite binary in `node_modules`, so it was not retried. A clean install and current production build remain unverified.
-- Backup export: the app displayed its successful-download status. The browser automation did not capture the generated file, so the downloaded JSON contents were not independently checked.
+- Earlier browser smoke tests covered the existing app flows before the latest demo/theme/PWA changes; they are not a substitute for rechecking the changed screens.
+- Browser verification: a production preview started, but the integrated browser and shell could not connect to its local port in this sandbox. Screenshots, viewport/control counts, runtime console inspection, and production offline behavior remain unverified here.
+- Production build: `npm run build` passed with Vite 8.3.7. Vite reports a 517 kB JavaScript chunk-size advisory; the build completed successfully.
+- Demo data checks: direct assertions passed for deterministic generation, safe merge and removal, idempotent loading, preservation of real records/goals/theme, daily nutrition ranges, backup validation/restore followed by demo removal, and unset-goal defaults.
+- Settings checks: current streak and weekly-goal normalization assertions passed.
+- PWA assets: verified the PNG signatures and dimensions: 192×192, 512×512, and 180×180.
 - Lighthouse: not run; no scores are claimed. Run it in Chrome DevTools on the deployed HTTPS URL and record scores here.
-- GitHub Pages: local `main` is eight commits ahead of remote `main`; the deployment commit has not been pushed. The Actions integration reports no workflows or runs for the remote repository, and `https://ved09072010.github.io/CaliTrack/` returns HTTP 404. After pushing, confirm **Settings → Pages → Build and deployment → Source** is **GitHub Actions**, then verify a successful workflow and the published URL.
+- GitHub Pages: deployment was previously reported as failing because Pages was not enabled/configured. These changes have not been pushed; after pushing, select **Settings → Pages → Build and deployment → Source: GitHub Actions**, then verify the workflow and published URL.

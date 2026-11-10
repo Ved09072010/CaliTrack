@@ -47,13 +47,15 @@ Use the system serif stack for headings and system sans-serif for body text.
 Surfaces have a translucent border and warm shadow; blur is decorative and has
 a solid-color fallback. Controls have a minimum 44px touch target, a visible
 keyboard focus ring, and motion respects `prefers-reduced-motion`.
+The default theme follows the device; a saved light or dark choice overrides
+that preference. The browser theme color follows the resolved palette.
 
 ## Screen structure
 
 - Home: three progress rings, a seven-day activity strip, and compact training
   statistics. Settings and backup open from a gear button in the header.
 - Workouts: Log, Programs, and Timer segments. Forms live in bottom sheets;
-  performance trends remain compact and body stats are collapsed by default.
+  exercise and body-weight charts appear when data exists.
 - Habits: Today and Streaks segments with a shared 12-week completion heatmap.
 - Diet: Today and Week segments with calorie/protein progress, quick water and
   favorite-food actions, and a weekly chart.
@@ -62,4 +64,14 @@ keyboard focus ring, and motion respects `prefers-reduced-motion`.
 - Settings: preference, backup, restore, export, and reset actions remain
   available from the Home gear entry.
 
-No storage schema or storage module changes are part of the visual redesign.
+## Data presentation
+
+- Chart.js is bundled with the app so progress charts remain available offline.
+- Sample data uses `demo_` IDs, is relative to the current date, and can be
+  removed without deleting user records.
+- First launch offers sample data once; either choice is remembered.
+- The Home workout ring uses the editable weekly workout goal. The displayed
+  day streak is the current consecutive streak, not the lifetime best.
+
+The storage module and record groups remain unchanged. Settings also include a
+weekly workout goal, and theme selection supports the device's system preference.

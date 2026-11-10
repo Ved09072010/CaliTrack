@@ -5,13 +5,13 @@ Your records stay in this browser's local storage.
 
 ## What works now
 
-- Seven-tab navigation: Home, Workouts, Habits, Diet, Library, Programs, and Settings.
-- Responsive dark slate-and-cobalt theme with mobile-friendly navigation.
+- Five-tab navigation: Home, Workouts, Habits, Diet, and Library. Programs and timers are inside Workouts; Settings opens from Home.
+- Warm cream-and-charcoal theme with section accents, glass surfaces, and a system theme default.
 - React UI, with all saved data accessed through the shared storage module.
 - Workout logger automatically records the date and time, with reps or hold seconds, notes, recent exercises, and grouped history.
 - Edit and delete saved workouts.
-- Weekly workout, rep, and streak summaries; exercise records and progress charts.
-- Body-weight logging and a weight-trend chart.
+- Weekly workout goal, current streak, exercise records, and progress charts.
+- Body-weight logging and a weight-trend chart; Chart.js is bundled for offline use.
 - Habits with daily check-offs, streaks, and 7-day/30-day completion grids.
 - Habit rename, archive/restore, and permanent delete.
 - Meal logging with calories and macros, saved food favorites, and meal history.
@@ -25,9 +25,10 @@ Your records stay in this browser's local storage.
 - Rest, countdown, hold, and EMOM timers with pause/resume controls.
 - Home dashboard with today's workout, habit, meal, and hydration totals plus workout streaks, lifetime workouts, and monthly PRs.
 - Quick actions to log workouts, check habits, log meals, browse exercises, or open programs.
-- Settings for dark/light theme, metric/imperial display, and nutrition goals.
+- Settings for system/light/dark theme, metric/imperial display, nutrition goals, and weekly workout goals.
 - Downloadable JSON backup, validated backup restore, and a confirmed reset for all saved app data.
-- Installable PWA with cached app files for offline use and an offline status notice.
+- Deterministic 12-week demo data that can be loaded and removed without touching real records.
+- Installable PWA with PNG icons, offline app caching, and an offline status notice.
 
 ## Run locally
 
@@ -52,12 +53,11 @@ site to the `dist` folder. Preview it locally with `npm run preview`.
 On a supported browser, open the deployed HTTPS site and choose **Install app** or
 **Add to Home Screen**. Open it once while online so the app files can be cached.
 Workout, habit, meal, and settings data remain in this device's browser storage.
-Charts use Chart.js from a free CDN; when it has not been cached or there is no
-connection, tracking still works and chart views explain that charts are unavailable.
+Chart.js is included in the app bundle, so charts do not need a network connection.
 
-The service worker caches the app shell and static assets. After changing shipped
-files, increment `CACHE_VERSION` in `public/service-worker.js` before deployment.
-The new cache replaces the old one when the updated service worker activates.
+The service worker checks page navigations online first and falls back to the
+cached app shell offline. Hashed JavaScript and CSS assets are cache-first; the
+active build discovers and caches them during installation.
 
 ## Publish with GitHub Pages
 

@@ -1,6 +1,7 @@
 const CACHE_PREFIX = "calitrack-";
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
+const HASHED_ASSET = /\/assets\/[^/]+-[A-Za-z0-9_-]{8,}\.(?:js|css)$/;
 
 function appUrl(path = "") {
   return new URL(path, self.registration.scope).href;
@@ -9,11 +10,20 @@ function appUrl(path = "") {
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
+    const shellUrl = appUrl("./");
     await cache.addAll([
-      appUrl("./"),
+      shellUrl,
       appUrl("manifest.webmanifest"),
       appUrl("icons/calitrack.svg"),
+      appUrl("icons/calitrack-192.png"),
+      appUrl("icons/calitrack-512.png"),
+      appUrl("icons/apple-touch-icon.png"),
     ]);
+    const shell = await cache.match(shellUrl);
+    const shellText = await shell.text();
+    const assets = [...shellText.matchAll(/(?:src|href)="([^"]+\.(?:js|css))"/g)]
+      .map((match) => new URL(match[1], shellUrl).href);
+    await cache.addAll(assets);
 
     await self.skipWaiting();
   })());
@@ -37,8 +47,13 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
-    const cachedResponse = await cache.match(request);
-    if (cachedResponse) return cachedResponse;
+    if (HASHED_ASSET.test(requestUrl.pathname)) {
+      const cachedResponse = await cache.match(request);
+      if (cachedResponse) return cachedResponse;
+      const response = await fetch(request);
+      if (response.ok) await cache.put(request, response.clone());
+      return response;
+    }
 
     try {
       const response = await fetch(request);
@@ -48,9 +63,13 @@ self.addEventListener("fetch", (event) => {
       return response;
     } catch (error) {
       if (request.mode === "navigate") {
+        const page = await cache.match(request);
+        if (page) return page;
         const appShell = await cache.match(appUrl("./"));
         if (appShell) return appShell;
       }
+      const cachedResponse = await cache.match(request);
+      if (cachedResponse) return cachedResponse;
       throw error;
     }
   })());
