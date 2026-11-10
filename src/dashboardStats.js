@@ -35,6 +35,20 @@ export function getCurrentWorkoutStreak(workouts, today) {
   return streak;
 }
 
+export function getWorkoutDaysThisWeek(workouts, today) {
+  const monday = new Date(`${today}T00:00:00Z`);
+  monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7));
+  const sunday = new Date(monday);
+  sunday.setUTCDate(sunday.getUTCDate() + 6);
+  const start = monday.toISOString().slice(0, 10);
+  const end = sunday.toISOString().slice(0, 10);
+  return new Set(
+    workouts
+      .map((workout) => workout.date)
+      .filter((date) => isValidDate(date) && date >= start && date <= end),
+  ).size;
+}
+
 export function getPersonalRecordsThisMonth(workouts, today) {
   const month = today.slice(0, 7);
   const bestByExercise = new Map();

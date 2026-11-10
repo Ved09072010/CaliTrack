@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { todayString } from "../js/utils.js";
 import { load } from "../js/storage.js";
-import { getDashboardStats } from "./dashboardStats.js";
+import { getDashboardStats, getWorkoutDaysThisWeek } from "./dashboardStats.js";
 import { getSkillStates } from "./skillTree.js";
 import { Icon, IconButton, ProgressRing, SectionHeading } from "./ui.jsx";
 
@@ -86,7 +86,7 @@ export default function Dashboard({ workouts, workoutError, active, onWorkout, o
       calories: data.settings.calorieGoal ? Math.min(1, mealCalories / data.settings.calorieGoal) : 0,
     };
   });
-  const workoutDays = workouts.filter((workout) => workout.date >= week[0].date && workout.date <= today).length;
+  const workoutDays = getWorkoutDaysThisWeek(workouts, today);
   const showDemoPrompt = !data.error && !workoutError
     && !data.settings.demoPromptDismissed && !data.settings.demoLoaded
     && !workouts.length && !data.habits.length && !data.checks.length && !data.meals.length
