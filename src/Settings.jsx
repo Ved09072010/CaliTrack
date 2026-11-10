@@ -1,69 +1,35 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { load, replaceMany } from "../js/storage.js";
 import { APP_DATA_KEYS, validateAppData, validateBackup } from "./appData.js";
+import { BottomSheet, Icon } from "./ui.jsx";
 import { DEFAULT_SETTINGS } from "./settingsData.js";
 
-function SettingsForm({ settings, storageError, onSave }) {
+export default function Settings({ settings, storageError, onSaveSettings, onImport, onReset }) {
+  const [sheet, setSheet] = useState("");
   const [draft, setDraft] = useState(settings);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(Boolean(storageError));
+  const [backupFile, setBackupFile] = useState(null);
 
-  useEffect(() => {
+  function showSheet(name) {
     setDraft(settings);
-  }, [settings]);
+    setMessage("");
+    setIsError(false);
+    setSheet(name);
+  }
 
-  function submit(event) {
+  function saveSettings(event) {
     event.preventDefault();
     try {
-      onSave(draft);
-      setMessage("Settings saved.");
+      onSaveSettings(draft);
+      setMessage("Saved.");
       setIsError(false);
+      setSheet("");
     } catch (error) {
       setMessage(error.message);
       setIsError(true);
     }
   }
-
-  return (
-    <section className="settings-section" aria-labelledby="preferences-title">
-      <h2 id="preferences-title">Preferences &amp; goals</h2>
-      <form className="settings-form" noValidate onSubmit={submit}>
-        <label className="field">
-          <span>Color theme</span>
-          <select value={draft.theme} onChange={(event) => setDraft({ ...draft, theme: event.target.value })}>
-            <option value="dark">Dark</option>
-            <option value="light">Light</option>
-          </select>
-        </label>
-        <label className="field">
-          <span>Measurement units</span>
-          <select value={draft.units} onChange={(event) => setDraft({ ...draft, units: event.target.value })}>
-            <option value="metric">Metric (kg)</option>
-            <option value="imperial">Imperial (lb)</option>
-          </select>
-        </label>
-        {[
-          ["calorieGoal", "Daily calorie goal (kcal)"],
-          ["proteinGoal", "Daily protein goal (g)"],
-          ["waterGoal", "Daily water goal (ml)"],
-        ].map(([key, label]) => (
-          <label className="field" key={key}>
-            <span>{label}</span>
-            <input type="number" min="1" step="1" value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: Number(event.target.value) })} />
-          </label>
-        ))}
-        {storageError && <p className="form-message is-error" role="alert">{storageError}</p>}
-        {message && <p className={`form-message${isError ? " is-error" : ""}`} role={isError ? "alert" : "status"}>{message}</p>}
-        <button className="primary-button" type="submit">Save settings</button>
-      </form>
-      <p className="muted settings-hint">Weights are stored in kilograms. Changing units converts how they appear without changing your saved records.</p>
-    </section>
-  );
-}
-
-function BackupSection({ onImport, onReset }) {
-  const [message, setMessage] = useState("");
-  const [isError, setIsError] = useState(false);
 
   function exportBackup() {
     try {
@@ -76,10 +42,11 @@ function BackupSection({ onImport, onReset }) {
       const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" }));
       const link = document.createElement("a");
       link.href = url;
-      link.download = `calitrack-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      link.download = `calitrack-backup-${today()}.json`;
       link.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-      setMessage("Backup downloaded. Keep it somewhere safe.");
+      setSheet("");
+      setMessage("Backup saved.");
       setIsError(false);
     } catch (error) {
       setMessage(error.message);
@@ -92,16 +59,14 @@ function BackupSection({ onImport, onReset }) {
     const file = input.files?.[0];
     if (!file) return;
     try {
-      if (file.size > 5 * 1024 * 1024) {
-        throw new Error("Choose a backup smaller than 5 MB.");
-      }
-      const backup = JSON.parse(await file.text());
-      const data = validateBackup(backup);
+      if (file.size > 5 * 1024 * 1024) throw new Error("Choose a backup under 5 MB.");
+      const data = validateBackup(JSON.parse(await file.text()));
       onImport(data);
-      setMessage("Backup restored successfully.");
+      setSheet("");
+      setMessage("Backup restored.");
       setIsError(false);
     } catch (error) {
-      setMessage(error.message || "The selected backup could not be read.");
+      setMessage(error.message || "Backup could not be read.");
       setIsError(true);
     } finally {
       input.value = "";
@@ -109,13 +74,13 @@ function BackupSection({ onImport, onReset }) {
   }
 
   function reset() {
-    if (!window.confirm("Reset CaliTrack on this device? All workouts, habits, meals, routines, and settings will be deleted.")) return;
     try {
       const cleared = Object.fromEntries(APP_DATA_KEYS.map((key) => [key, null]));
       cleared.settings = DEFAULT_SETTINGS;
       replaceMany(cleared);
       onReset();
-      setMessage("All app data was reset on this device.");
+      setSheet("");
+      setMessage("Data reset.");
       setIsError(false);
     } catch (error) {
       setMessage(error.message);
@@ -123,33 +88,45 @@ function BackupSection({ onImport, onReset }) {
     }
   }
 
-  return (
-    <section className="settings-section" aria-labelledby="backup-title">
-      <h2 id="backup-title">Backup &amp; reset</h2>
-      <p className="muted">Your backup is a JSON file stored wherever you choose. It is not uploaded.</p>
-      <div className="settings-actions">
-        <button className="secondary-button" type="button" onClick={exportBackup}>Export all data</button>
-        <label className="field backup-file">
-          <span>Restore from a JSON backup</span>
-          <input type="file" accept=".json,application/json" onChange={importBackup} />
-        </label>
-        <button className="secondary-button danger-button" type="button" onClick={reset}>Reset all app data</button>
-      </div>
+  return <>
+    <div className="page-heading"><h1>Settings</h1></div>
+    {storageError && <p className="form-message is-error" role="alert">{storageError}</p>}
+    <section className="settings-list" aria-label="Settings">
+      <button className="settings-row" type="button" onClick={() => showSheet("theme")}><span>Theme</span><strong>{settings.theme === "system" ? "System" : settings.theme}</strong><Icon name="arrow" /></button>
+      <button className="settings-row" type="button" onClick={() => showSheet("units")}><span>Units</span><strong>{settings.units === "imperial" ? "Imperial" : "Metric"}</strong><Icon name="arrow" /></button>
+      <button className="settings-row" type="button" onClick={() => showSheet("goals")}><span>Daily goals</span><Icon name="arrow" /></button>
+      <button className="settings-row" type="button" onClick={() => showSheet("export")}><span>Export backup</span><Icon name="arrow" /></button>
+      <button className="settings-row" type="button" onClick={() => showSheet("import")}><span>Restore backup</span><Icon name="arrow" /></button>
+      <button className="settings-row is-danger" type="button" onClick={() => showSheet("reset")}><span>Reset data</span><Icon name="arrow" /></button>
       {message && <p className={`form-message${isError ? " is-error" : ""}`} role={isError ? "alert" : "status"}>{message}</p>}
     </section>
-  );
+
+    <BottomSheet open={sheet === "theme"} title="Theme" onClose={() => setSheet("")}>
+      <form className="sheet-form" onSubmit={saveSettings}><label className="field"><span>Color</span><select value={draft.theme} onChange={(event) => setDraft({ ...draft, theme: event.target.value })}><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label><button className="primary-button" type="submit">Save</button></form>
+    </BottomSheet>
+    <BottomSheet open={sheet === "units"} title="Units" onClose={() => setSheet("")}>
+      <form className="sheet-form" onSubmit={saveSettings}><label className="field"><span>Measure in</span><select value={draft.units} onChange={(event) => setDraft({ ...draft, units: event.target.value })}><option value="metric">Metric (kg)</option><option value="imperial">Imperial (lb)</option></select></label><button className="primary-button" type="submit">Save</button></form>
+    </BottomSheet>
+    <BottomSheet open={sheet === "goals"} title="Daily goals" onClose={() => setSheet("")}>
+      <form className="sheet-form" onSubmit={saveSettings}>
+        {[[ "calorieGoal", "Calories" ], [ "proteinGoal", "Protein" ], [ "waterGoal", "Water" ]].map(([key, label]) => <label className="field" key={key}><span>{label}</span><input type="number" min="1" value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: Number(event.target.value) })} /></label>)}
+        <button className="primary-button" type="submit">Save</button>
+      </form>
+    </BottomSheet>
+    <BottomSheet open={sheet === "export"} title="Export backup" onClose={() => setSheet("")}>
+      <p className="sheet-copy">Save a copy of all your data on this device.</p><button className="primary-button" type="button" onClick={exportBackup}>Export</button>
+    </BottomSheet>
+    <BottomSheet open={sheet === "import"} title="Restore backup" onClose={() => setSheet("")}>
+      <label className="field"><span>JSON file</span><input type="file" accept=".json,application/json" onChange={importBackup} /></label>
+      {isError && <p className="form-message is-error" role="alert">{message}</p>}
+    </BottomSheet>
+    <BottomSheet open={sheet === "reset"} title="Reset CaliTrack?" onClose={() => setSheet("")}>
+      <p className="sheet-copy">This removes all saved data from this device.</p>
+      <div className="sheet-actions"><button className="secondary-button" type="button" onClick={() => setSheet("")}>Cancel</button><button className="primary-button danger-button" type="button" onClick={reset}>Reset</button></div>
+    </BottomSheet>
+  </>;
 }
 
-export default function Settings({ settings, storageError, onSaveSettings, onImport, onReset }) {
-  return (
-    <>
-      <div className="page-heading">
-        <p className="eyebrow">YOUR APP, YOUR DATA</p>
-        <h1>Settings</h1>
-        <p className="intro">Choose how CaliTrack looks and keep a copy of your progress.</p>
-      </div>
-      <SettingsForm settings={settings} storageError={storageError} onSave={onSaveSettings} />
-      <BackupSection onImport={onImport} onReset={onReset} />
-    </>
-  );
+function today() {
+  return new Date().toISOString().slice(0, 10);
 }

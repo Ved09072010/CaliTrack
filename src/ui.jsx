@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 export function Icon({ name, size = 20 }) {
   const paths = {
@@ -6,6 +6,7 @@ export function Icon({ name, size = 20 }) {
     plus: <path d="M12 5v14m-7-7h14" />,
     close: <path d="m6 6 12 12M18 6 6 18" />,
     arrow: <path d="m9 18 6-6-6-6" />,
+    more: <><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></>,
   };
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -48,6 +49,7 @@ export function QuickChips({ label, items, onSelect, getLabel = (item) => item, 
 
 export function BottomSheet({ open, title, onClose, children, className = "" }) {
   const ref = useRef(null);
+  const titleId = useId();
 
   useEffect(() => {
     const dialog = ref.current;
@@ -60,14 +62,14 @@ export function BottomSheet({ open, title, onClose, children, className = "" }) 
     <dialog
       className={`bottom-sheet ${className}`.trim()}
       ref={ref}
-      aria-labelledby="bottom-sheet-title"
+      aria-labelledby={titleId}
       onCancel={(event) => { event.preventDefault(); onClose(); }}
       onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}
     >
       <div className="bottom-sheet-content">
         <div className="bottom-sheet-heading">
           <span className="sheet-handle" aria-hidden="true" />
-          <h2 id="bottom-sheet-title">{title}</h2>
+          <h2 id={titleId}>{title}</h2>
           <IconButton label="Close panel" onClick={onClose}><Icon name="close" /></IconButton>
         </div>
         {children}

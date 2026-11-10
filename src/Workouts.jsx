@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createId, currentTimeString, formatDate, todayString } from "../js/utils.js";
 import { fromKilograms, toKilograms } from "./settingsData.js";
 import { EXERCISES } from "./data.js";
-import { QuickChips, SegmentedControl } from "./ui.jsx";
+import { BottomSheet, Icon, IconButton, QuickChips, SegmentedControl } from "./ui.jsx";
 import Programs from "./Programs.jsx";
 import Progress from "./Progress.jsx";
 
@@ -72,19 +72,10 @@ function getRecordIds(workouts) {
 }
 
 function WorkoutDialog({ isOpen, onClose, workouts, onSave, onMessage, editingWorkout, initialExercise, disabled, units }) {
-  const dialogRef = useRef(null);
   const [form, setForm] = useState(getInitialForm);
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState("");
   const [moreOptions, setMoreOptions] = useState(false);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (isOpen && !dialog.open) dialog.showModal();
-    if (!isOpen && dialog.open) dialog.close();
-    if (isOpen) dialog.querySelector("#workout-exercise")?.focus();
-  }, [isOpen]);
 
   useEffect(() => {
     if (!editingWorkout) return;
@@ -181,19 +172,8 @@ function WorkoutDialog({ isOpen, onClose, workouts, onSave, onMessage, editingWo
   }
 
   return (
-    <dialog
-      ref={dialogRef}
-      id="workout-dialog"
-      className="workout-dialog bottom-sheet"
-      onCancel={(event) => { event.preventDefault(); close(); }}
-    >
-      <div className="bottom-sheet-content">
+    <BottomSheet open={isOpen} title={editing ? "Edit workout" : "Log workout"} onClose={close} className="workout-dialog">
       <form id="workout-form" className="workout-form" noValidate onSubmit={submit}>
-        <div className="bottom-sheet-heading workout-form-heading">
-          <span className="sheet-handle" aria-hidden="true" />
-          <h2>Log a workout</h2>
-          <button className="close-button" type="button" aria-label="Close workout form" onClick={close}>×</button>
-        </div>
         <label className="field">
           <span>Exercise</span>
           <select id="workout-exercise" value={form.exercise} onChange={(event) => chooseExercise(event.target.value)}>
@@ -251,8 +231,7 @@ function WorkoutDialog({ isOpen, onClose, workouts, onSave, onMessage, editingWo
           <button className="primary-button" type="submit" disabled={disabled}>{editing ? "Update workout" : "Save workout"}</button>
         </div>
       </form>
-      </div>
-    </dialog>
+    </BottomSheet>
   );
 }
 
@@ -289,6 +268,8 @@ export default function Workouts({
   const [isOpen, setIsOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [selectedEdit, setSelectedEdit] = useState(null);
+  const [selectedAction, setSelectedAction] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [quickExercise, setQuickExercise] = useState("");
   const [activeSection, setActiveSection] = useState("Log");
   const [showAll, setShowAll] = useState(false);
@@ -323,10 +304,11 @@ export default function Workouts({
   }
 
   function deleteWorkout(workout) {
-    if (!window.confirm(`Delete your ${workout.exercise} workout from ${formatDate(workout.date)}?`)) return;
     try {
       onSave(workouts.filter((item) => item.id !== workout.id));
       setFeedback("Workout deleted.");
+      setConfirmDelete(false);
+      setSelectedAction(null);
     } catch (error) {
       setFeedback(error.message);
     }
@@ -335,9 +317,7 @@ export default function Workouts({
   return (
     <>
       <div className="page-heading">
-        <p className="eyebrow">TRAINING</p>
         <h1>Workouts</h1>
-        <p className="intro">Track your strength and build momentum.</p>
       </div>
       <SegmentedControl label="Workout screens" options={["Log", "Programs", "Timer"]} value={activeSection} onChange={setActiveSection} />
       {activeSection === "Log" && <>
@@ -386,10 +366,7 @@ export default function Workouts({
                         <p>{workout.time ? `${workout.time} · ` : ""}{workout.sets.map((set) => setSummary(set, mode, units)).join("  ·  ")}</p>
                         {workout.notes && <p className="history-note">{workout.notes}</p>}
                       </div>
-                      <div className="history-actions">
-                        <button className="text-button" type="button" onClick={() => edit(workout)}>Edit</button>
-                        <button className="text-button danger-button" type="button" onClick={() => deleteWorkout(workout)}>Delete</button>
-                      </div>
+                      <IconButton label={`More actions for ${workout.exercise}`} onClick={() => { setSelectedAction(workout); setConfirmDelete(false); }}><Icon name="more" /></IconButton>
                     </article>
                   );
                 })}
@@ -410,11 +387,17 @@ export default function Workouts({
         />
         <Progress workouts={workouts} units={units} theme={theme} />
         <button id="show-workout-form" className="screen-fab" type="button" aria-label="Log a workout" disabled={Boolean(storageError)} onClick={() => { setSelectedEdit(null); setQuickExercise(""); setIsOpen(true); }}>
-          <span aria-hidden="true">+</span><span>Log</span>
+          <Icon name="plus" /><span>Log</span>
         </button>
       </>}
       {activeSection === "Programs" && <Programs view="Programs" onStartRoutine={(routine) => { setActiveSection("Log"); onStartRoutine(routine); }} />}
       {activeSection === "Timer" && <Programs view="Timer" onStartRoutine={onStartRoutine} />}
+      <BottomSheet open={Boolean(selectedAction) && !confirmDelete} title={selectedAction?.exercise || "Workout"} onClose={() => setSelectedAction(null)}>
+        <div className="sheet-actions"><button className="secondary-button" type="button" onClick={() => { edit(selectedAction); setSelectedAction(null); }}>Edit</button><button className="secondary-button danger-button" type="button" onClick={() => setConfirmDelete(true)}>Delete</button></div>
+      </BottomSheet>
+      <BottomSheet open={confirmDelete} title="Delete workout?" onClose={() => setConfirmDelete(false)}>
+        <div className="sheet-actions"><button className="secondary-button" type="button" onClick={() => setConfirmDelete(false)}>Cancel</button><button className="primary-button danger-button" type="button" onClick={() => deleteWorkout(selectedAction)}>Delete</button></div>
+      </BottomSheet>
     </>
   );
 }

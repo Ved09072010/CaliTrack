@@ -3,6 +3,7 @@ import { createId } from "../js/utils.js";
 import { load, save } from "../js/storage.js";
 import { BUILT_IN_ROUTINES } from "../data/programs.js";
 import { EXERCISES } from "./data.js";
+import { BottomSheet, Icon, IconButton, SegmentedControl } from "./ui.jsx";
 
 const TIMER_MODES = ["Rest", "Countdown", "Hold", "EMOM"];
 const DEFAULT_SECONDS = { Rest: 60, Countdown: 60, Hold: 0, EMOM: 600 };
@@ -45,25 +46,12 @@ function formatTime(seconds) {
   return `${String(minutes).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
 }
 
-function RoutineCard({ routine, onStart, onDelete }) {
+function RoutineCard({ routine, onStart, onMore }) {
   return (
-    <article className="routine-card">
-      <div>
-        <span className="routine-level">{routine.level}</span>
-        <h3>{routine.name}</h3>
-        <p>{routine.description}</p>
-      </div>
-      <ol className="routine-exercises">
-        {routine.exercises.map((exercise, index) => (
-          <li key={`${routine.id}-${exercise.name}-${index}`}>
-            <span>{exercise.name}</span><small>{exercise.target}</small>
-          </li>
-        ))}
-      </ol>
-      <div className="routine-actions">
-        <button className="primary-button" type="button" onClick={() => onStart(routine)}>Start today's workout</button>
-        {onDelete && <button className="text-button danger-button" type="button" onClick={() => onDelete(routine)}>Delete routine</button>}
-      </div>
+    <article className="routine-row">
+      <div className="routine-row-copy"><h3>{routine.name}</h3><span>{routine.level} · {routine.exercises.length} moves</span></div>
+      <button className="primary-button routine-start" type="button" onClick={() => onStart(routine)}>Start</button>
+      {onMore && <IconButton label={`More actions for ${routine.name}`} onClick={() => onMore(routine)}><Icon name="more" /></IconButton>}
     </article>
   );
 }
@@ -164,19 +152,7 @@ function WorkoutTimer() {
     <section className="program-section" aria-labelledby="timer-title">
       <h2 id="timer-title">Workout timers</h2>
       <p className="muted">Use a simple rest, countdown, hold, or EMOM timer.</p>
-      <div className="timer-modes" role="group" aria-label="Timer type">
-        {TIMER_MODES.map((item) => (
-          <button
-            className={`recent-button${mode === item ? " is-selected" : ""}`}
-            type="button"
-            aria-pressed={mode === item}
-            key={item}
-            onClick={() => chooseMode(item)}
-          >
-            {item}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl label="Timer type" options={TIMER_MODES} value={mode} onChange={chooseMode} />
       {mode === "EMOM" ? (
         <label className="field timer-input">
           <span>Rounds, one minute each</span>
@@ -214,6 +190,8 @@ export default function Programs({ onStartRoutine, view = "Programs" }) {
   const [draftExercises, setDraftExercises] = useState([]);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
+  const [builderOpen, setBuilderOpen] = useState(false);
+  const [selectedRoutine, setSelectedRoutine] = useState(null);
   const customRoutines = saved.routines;
   const choices = EXERCISES.filter((exercise) => !draftExercises.includes(exercise));
 
@@ -245,6 +223,7 @@ export default function Programs({ onStartRoutine, view = "Programs" }) {
       setSaved({ routines, error: "" });
       setName("");
       setDraftExercises([]);
+      setBuilderOpen(false);
       setMessage("Routine saved on this device.");
       setIsError(false);
     } catch (error) {
@@ -254,13 +233,13 @@ export default function Programs({ onStartRoutine, view = "Programs" }) {
   }
 
   function deleteRoutine(routine) {
-    if (!window.confirm(`Delete the "${routine.name}" routine?`)) return;
     const routines = customRoutines.filter((item) => item.id !== routine.id);
     try {
       save("customRoutines", routines);
       setSaved({ routines, error: "" });
       setMessage("Routine deleted.");
       setIsError(false);
+      setSelectedRoutine(null);
     } catch (error) {
       setMessage(error.message);
       setIsError(true);
@@ -270,18 +249,26 @@ export default function Programs({ onStartRoutine, view = "Programs" }) {
   return (
     <>
       {view === "Programs" && <>
-      <p className="program-intro">Ready-made and custom routines.</p>
       {saved.error && <p className="form-message is-error" role="alert">{saved.error}</p>}
       <section className="program-section" aria-labelledby="built-in-programs-title">
-        <h2 id="built-in-programs-title">Ready-made routines</h2>
+        <div className="section-heading"><h2 id="built-in-programs-title">Programs</h2><IconButton label="Create routine" onClick={() => setBuilderOpen(true)}><Icon name="plus" /></IconButton></div>
         <div className="routine-list">
-          {BUILT_IN_ROUTINES.map((routine) => (
+          {BUILT_IN_ROUTINES.slice(0, 5).map((routine) => (
             <RoutineCard routine={routine} onStart={onStartRoutine} key={routine.id} />
           ))}
         </div>
       </section>
-      <details className="progress-disclosure custom-routine-disclosure">
-        <summary>Build a routine</summary>
+      {customRoutines.length > 0 && (
+        <section className="program-section" aria-labelledby="saved-routines-title">
+          <h2 id="saved-routines-title">Your routines</h2>
+          <div className="routine-list">
+            {customRoutines.slice(0, 5).map((routine) => (
+              <RoutineCard routine={routine} onStart={onStartRoutine} onMore={(item) => setSelectedRoutine(item)} key={routine.id} />
+            ))}
+          </div>
+        </section>
+      )}
+      <BottomSheet open={builderOpen} title="Build a routine" onClose={() => setBuilderOpen(false)}>
         {!saved.error ? (
           <form className="custom-routine-form" noValidate onSubmit={saveRoutine}>
             <label className="field">
@@ -311,18 +298,11 @@ export default function Programs({ onStartRoutine, view = "Programs" }) {
             <button className="primary-button" type="submit">Save routine</button>
             {message && <p className={`form-message${isError ? " is-error" : ""}`} role={isError ? "alert" : "status"}>{message}</p>}
           </form>
-        ) : <p className="muted">Custom routines are unavailable until the saved routine data is fixed.</p>}
-      </details>
-      {customRoutines.length > 0 && (
-        <section className="program-section" aria-labelledby="saved-routines-title">
-          <h2 id="saved-routines-title">Your routines</h2>
-          <div className="routine-list">
-            {customRoutines.map((routine) => (
-              <RoutineCard routine={routine} onStart={onStartRoutine} onDelete={deleteRoutine} key={routine.id} />
-            ))}
-          </div>
-        </section>
-      )}
+        ) : <p className="muted">Routine data is invalid.</p>}
+      </BottomSheet>
+      <BottomSheet open={Boolean(selectedRoutine)} title={selectedRoutine?.name || "Routine"} onClose={() => setSelectedRoutine(null)}>
+        <div className="sheet-actions"><button className="secondary-button danger-button" type="button" onClick={() => deleteRoutine(selectedRoutine)}>Delete routine</button></div>
+      </BottomSheet>
       </>}
       {view === "Timer" && <WorkoutTimer />}
     </>
