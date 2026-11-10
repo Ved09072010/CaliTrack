@@ -659,7 +659,7 @@ button:not(:disabled):active { transform: scale(.98); }
 .app-toast {
   position: fixed;
   z-index: 5;
-  top: max(14px, env(safe-area-inset-top));
+  bottom: calc(78px + env(safe-area-inset-bottom));
   left: 50%;
   max-width: calc(100vw - 32px);
   margin: 0;
@@ -732,11 +732,11 @@ button:not(:disabled):active { transform: scale(.98); }
   position: absolute;
   top: 31px;
   left: 50%;
-  max-width: 66px;
+  max-width: 100px;
   overflow: hidden;
   transform: translateX(-50%);
   color: var(--text);
-  font-size: .9rem;
+  font-size: .84rem;
   font-variant-numeric: tabular-nums;
   font-weight: 750;
   text-align: center;
@@ -744,7 +744,7 @@ button:not(:disabled):active { transform: scale(.98); }
   white-space: nowrap;
 }
 
-.ring-number small { color: var(--muted); font-size: .55rem; font-weight: 600; }
+.ring-number small { color: var(--muted); font-size: .62rem; font-weight: 600; }
 .ring-label { color: var(--muted); font-size: .7rem; font-weight: 650; text-align: center; }
 
 .section-heading { margin-top: 24px; }
