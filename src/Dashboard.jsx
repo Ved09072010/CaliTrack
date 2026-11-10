@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { todayString } from "../js/utils.js";
 import { load } from "../js/storage.js";
 import { getDashboardStats } from "./dashboardStats.js";
-import { IconButton, ProgressRing, SectionHeading } from "./ui.jsx";
+import { Icon, IconButton, ProgressRing, SectionHeading } from "./ui.jsx";
 
 const DEFAULT_GOALS = { calorieGoal: 2000, proteinGoal: 100, waterGoal: 2000 };
 
@@ -38,7 +38,7 @@ function Stat({ value, label }) {
   return <div className="dashboard-stat"><strong>{value}</strong><span>{label}</span></div>;
 }
 
-export default function Dashboard({ workouts, workoutError, active, onWorkout, onTab, onSettings }) {
+export default function Dashboard({ workouts, workoutError, active, onWorkout, onSettings }) {
   const [data, setData] = useState(getDashboardData);
   const today = todayString();
 
@@ -52,9 +52,6 @@ export default function Dashboard({ workouts, workoutError, active, onWorkout, o
   )).length;
   const todaysMeals = data.meals.filter((meal) => meal.date === today);
   const calories = todaysMeals.reduce((total, meal) => total + meal.calories, 0);
-  const protein = todaysMeals.reduce((total, meal) => total + meal.protein, 0);
-  const water = data.water.find((entry) => entry.date === today)?.ml || 0;
-  const todaysWorkouts = workouts.filter((workout) => workout.date === today);
   const stats = getDashboardStats(workouts, today);
   const week = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(`${today}T12:00:00`);
@@ -83,7 +80,6 @@ export default function Dashboard({ workouts, workoutError, active, onWorkout, o
         <div className="page-heading">
           <p className="eyebrow">{todayLabel}</p>
           <h1>Move with purpose.</h1>
-          <p className="intro">Your day, at a glance.</p>
         </div>
         <IconButton label="Open settings and backup" onClick={onSettings}>
           <Icon name="settings" />
@@ -94,20 +90,19 @@ export default function Dashboard({ workouts, workoutError, active, onWorkout, o
 
       <section className="home-rings glass-panel" aria-label="Today's progress">
         <div className="ring-row">
-          <button type="button" onClick={() => onTab("workouts")} aria-label="View workouts this week">
-            <ProgressRing label="This week" value={workoutDays} total={3} color="var(--workout-accent)" />
-          </button>
-          <button type="button" onClick={() => onTab("habits")} aria-label="View habits completed today">
-            <ProgressRing label="Habits" value={completedHabits} total={activeHabits.length} color="var(--habit-accent)" />
-          </button>
-          <button type="button" onClick={() => onTab("diet")} aria-label="View calories today">
-            <ProgressRing label="Calories" value={Math.round(calories)} total={data.settings.calorieGoal} color="var(--diet-accent)" />
-          </button>
+          <ProgressRing label="This week" value={workoutDays} total={3} color="var(--workout-accent)" />
+          <ProgressRing label="Habits" value={completedHabits} total={activeHabits.length} color="var(--habit-accent)" />
+          <ProgressRing label="Calories" value={Math.round(calories)} total={data.settings.calorieGoal} color="var(--diet-accent)" />
         </div>
       </section>
 
+      <section className="home-today-action" aria-labelledby="today-action-title">
+        <h2 id="today-action-title">Today</h2>
+        <button className="primary-button" type="button" onClick={onWorkout}>Log workout</button>
+      </section>
+
       <section className="home-week-section" aria-labelledby="week-overview-title">
-        <SectionHeading title="This week" action="Workouts" onAction={() => onTab("workouts")} />
+        <SectionHeading title="Week" />
         <div className="week-overview glass-panel" role="list" aria-label="Daily activity for the last seven days">
           {week.map((day) => (
             <div className="week-day" role="listitem" key={day.date} aria-label={`${day.day}: ${day.trained ? "workout" : "no workout"}, ${Math.round(day.habits * 100)} percent habits, ${Math.round(day.calories * 100)} percent calories`}>
@@ -122,14 +117,14 @@ export default function Dashboard({ workouts, workoutError, active, onWorkout, o
         </div>
       </section>
 
-      <section className="home-section" aria-labelledby="week-summary-title">
-        <SectionHeading title="Your progress" action="See all" onAction={() => onTab("workouts")} />
+      <details className="home-extra-stats">
+        <summary>Stats</summary>
         <div className="home-stats">
           <Stat value={stats.bestStreak} label="Day streak" />
           <Stat value={stats.totalWorkouts} label="Workouts" />
           <Stat value={stats.recordsThisMonth} label="PRs this month" />
         </div>
-      </section>
+      </details>
     </>
   );
 }

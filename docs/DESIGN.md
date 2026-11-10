@@ -1,15 +1,32 @@
 # CaliTrack design audit
 
-1. Home is crowded with many equal-weight cards; make rings and the week strip the glanceable focus.
-2. Workouts mixes logging, history, and progress; separate Log, Programs, and Timer.
-3. Keep workout fields in a sheet and collapse notes, weight, and advanced options.
-4. Habits currently repeats dense per-habit grids; lead with today's checklist and one shared 12-week heatmap.
-5. Diet puts the meal form beside totals; lead with progress, quick water, favorites, and a weekly chart.
-6. Library search/results and progressions compete; separate Browse from Progressions.
-7. Programs and timers share a long page; segment them and keep custom routines behind an add action.
-8. Settings should leave the bottom navigation and open from a labeled gear control.
-9. Give each screen one accent, warm glass surfaces, concise labels, and tap-first detail sheets.
-10. Keep every current data flow, storage key, feature, and offline behavior intact while reshaping presentation.
+## Initial phone audit
+
+Counts are from the empty app at 390×844; text rows are approximate visible baselines.
+
+1. Home: 6 buttons / 10 text rows; untap the rings, keep the gear and one Today action.
+2. Workouts: 4 / 14; keep the three segments, move logging and item actions into sheets.
+3. Habits: 1 / 7 when empty; populated rows repeat controls and two grids, so use one menu per habit.
+4. Diet: 3 / 13; move the inline meal form and history actions into sheets.
+5. Library: 10 / 26; combine category choices into one control and cap visible results at five.
+6. Settings: 6 controls / 12 rows; make it a compact list with forms and backups on demand.
+7. Programs: routine cards repeat long descriptions and actions; show concise rows with one start action.
+8. Timers: four mode buttons and multiple actions compete; use a compact mode selector and one primary action.
+9. Across screens: collapse notes, macros, cues, and advanced fields; keep rows to one visible menu.
+10. Preserve every feature, data key, chart, storage flow, and offline behavior as content moves.
+
+## Clutter rules
+
+- At 390×844, show at most one primary button and three other controls above the fold (bottom navigation and list rows excluded).
+- Use at most two body-text sizes per screen; keep the title and no more than one short subtitle.
+- Do not add helper paragraphs below headings or fields. Labels and placeholders carry the necessary meaning.
+- Show no more than five list items before a “See all” action.
+- Keep each screen's main content within about one screen of scroll, two at most.
+- Put forms in bottom sheets; reveal secondary fields through one “More” control.
+- Put edit, delete, archive, rename, and duplicate behind one per-item menu.
+- Use icon-only repeated actions with accessible names; keep horizontally scrolling chips on one line.
+- Empty states use one short sentence and one clear next action.
+- Keep touch targets at least 44px and prevent horizontal page overflow at 360px.
 
 ## Visual system
 
