@@ -18,9 +18,13 @@ Your records stay in this browser's local storage.
 - Daily calorie, protein, and water goals with progress bars and one-tap water logging.
 - Weekly calories and protein chart.
 - Searchable exercise library with 35+ movement guides, form cues, and free YouTube tutorial search links.
-- A 32-node branching Skill Tree across Push, Pull, Legs, Core, and Skills, unlocked from logged sets or manual mastery.
-- Progression paths remain available in the Skill Tree view; node sheets show goals, prerequisites, progress, and a direct Log action.
-- Skill mastery and opened-node markers are included in backup/restore and reset with the rest of app data.
+- Expanded 90-node branching Skill Tree across Push (18), Pull (18), Legs (18), Core (18), and Skills (18), unlocked from logged sets or manual mastery.
+- Comprehensive XP and progression system: transparently derived from skill tier masteries (T1: 40 XP to T6: 700 XP), workout consistency (10 XP/active day), and personal records (25 XP/PR). Never stored independently or duplicated.
+- Progressive rank crests (Rookie through Legend) with mathematical level scaling (`floor(sqrt(XP / 20)) + 1`), rank progress tracking, and dedicated rank-up celebrations.
+- 29 visual milestone badges across skills, branch completions, workout consistency, volume, variety, personal records, and ranks with earned and locked states.
+- Progression paths remain available in the Skill Tree view; node sheets show goals, prerequisites, progress, XP rewards, and a direct Log action.
+- Skill mastery, progression tracking (`badgesSeen`, `rankSeen`), and opened-node markers are fully backwards-compatible, included in backup/restore, and reset with the rest of app data.
+- Android native build powered by Capacitor (`com.calitrack.app`), building into a standalone APK.
 - Log an exercise directly from its guide into the workout form.
 - Beginner, intermediate, and skill routines; starting one opens the logger with the first exercise preselected.
 - Custom routines saved on-device, with one-tap logging for each planned movement.
@@ -49,7 +53,33 @@ Your records stay in this browser's local storage.
 
 To make a production build, run `npm run build`. Vite writes the ready-to-publish
 site to the `dist` folder. Preview it locally with `npm run preview`.
-Run the skill-state assertions with `node scripts/test-skill-tree.js`.
+Run the test suite with:
+
+```powershell
+node scripts/test-skill-tree.js
+node scripts/test-progression.js
+node scripts/test-backup-compatibility.js
+node scripts/test-dashboard-stats.js
+node scripts/test-demo-workout-schedule.js
+```
+
+## Android build (Capacitor)
+
+CaliTrack is configured for Android using Capacitor:
+
+```powershell
+# 1. Build web production bundle
+npm run build
+
+# 2. Sync web assets with native Android project
+npx cap sync android
+
+# 3. Compile standalone Android debug APK
+cd android
+.\gradlew.bat assembleDebug
+```
+
+The resulting APK is output to `android/app/build/outputs/apk/debug/app-debug.apk`.
 
 ## Install and use offline
 

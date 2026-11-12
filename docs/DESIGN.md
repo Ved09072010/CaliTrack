@@ -72,9 +72,32 @@ that preference. The browser theme color follows the resolved palette.
 - First launch offers sample data once; either choice is remembered.
 - The Home workout ring uses the editable weekly workout goal. The displayed
   day streak is the current consecutive streak, not the lifetime best.
-- The Skill Tree has 32 nodes in five branches. A session masters a node only
-  when the required number of sets meet its reps/seconds goal; manual mastery
-  is stored separately from workouts under `skillMastery`.
+- The Skill Tree features 90 nodes across five branches (18 nodes per branch: Push, Pull, Legs, Core, Skills).
+  A session masters a node when the required number of sets meets its reps/seconds goal. Manual mastery is stored
+  alongside automatic log inferences under `skillMastery`.
+- XP Progression System: Purely derived from underlying activity (never stored independently):
+  * Tier 1 mastery: 40 XP
+  * Tier 2 mastery: 80 XP
+  * Tier 3 mastery: 150 XP
+  * Tier 4 mastery: 260 XP
+  * Tier 5 mastery: 420 XP
+  * Tier 6 mastery: 700 XP
+  * Logged training day: 10 XP
+  * Personal record set: 25 XP
+- Level formulas:
+  * Overall level: `floor(sqrt(totalXP / 20)) + 1`
+  * Branch level: `floor(sqrt(branchXP / 8)) + 1`
+- Ranks & Thresholds:
+  * Rookie: 0 XP
+  * Trainee: 300 XP
+  * Mover: 800 XP
+  * Athlete: 1,600 XP
+  * Adept: 2,800 XP
+  * Expert: 4,500 XP
+  * Master: 7,000 XP
+  * Legend: 10,000 XP
+- Distinct rank crests (metal badges rendered inline) and 29 milestone badges across skills, volume, streaks, and ranks.
+- Dedicated rank celebration sheet and non-stacking notification queue.
 - Node state is communicated by both a shape and a short text label. Available
   nodes use a subtle teal pulse that is removed for reduced-motion preferences.
 - The Home Stats disclosure adds only the mastered count and next skill.

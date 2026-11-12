@@ -74,7 +74,12 @@ Application/Storage panels. The build should complete without errors.
 - [ ] Confirm a two-prerequisite skill stays locked until both prerequisite nodes are mastered.
 - [ ] Open a node, follow a prerequisite, mark mastery manually, and use Log this to preselect the exercise.
 - [ ] Confirm a newly mastered node shows New until opened and that an unlock toast appears after logging.
-- [ ] Check the 32-node total and confirm all existing progression paths and unlock text remain available below the tree.
+- [ ] Verify the 90-node skill tree (18 per branch across Push, Pull, Legs, Core, Skills).
+- [ ] Verify XP calculations match exact formulas (mastery tiers, workout days, PRs).
+- [ ] Verify overall and branch level calculations.
+- [ ] Verify rank thresholds and rank-up celebrations.
+- [ ] Verify all 29 milestone badges unlock correctly and show earned vs locked states.
+- [ ] Verify Android debug APK build via Gradle.
 - [ ] Confirm a no-results search has a useful empty state.
 
 ### Phase 8 — Programs and timers
