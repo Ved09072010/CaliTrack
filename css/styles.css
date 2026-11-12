@@ -760,7 +760,7 @@ button:not(:disabled):active { transform: scale(.98); }
 }
 .home-today-action .primary-button { min-height: 44px; padding: 10px 18px; }
 .home-extra-stats { margin-top: 20px; }
-.home-extra-stats > summary {
+.home-extra-stats details > summary {
   min-height: 44px;
   padding: 12px 0;
   color: var(--muted);
@@ -769,6 +769,27 @@ button:not(:disabled):active { transform: scale(.98); }
   font-weight: 650;
 }
 .home-extra-stats .home-stats { padding: 4px 0 12px; }
+.home-rank-row {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: 36px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--glass);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.home-rank-copy { display: grid; min-width: 0; gap: 3px; }
+.home-rank-copy > strong { overflow: hidden; font-family: var(--heading-font); font-size: .88rem; text-overflow: ellipsis; white-space: nowrap; }
+.home-rank-copy > small { overflow: hidden; color: var(--muted); font-size: .68rem; font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
+.home-rank-row > svg:last-child { width: 18px; height: 18px; color: var(--muted); }
+.home-rank-xp { display: block; height: 4px; overflow: hidden; border-radius: 999px; background: var(--soft); }
+.home-rank-xp > span { display: block; width: var(--xp-progress, 0%); height: 100%; border-radius: inherit; background: var(--info-accent); }
 
 .week-overview {
   display: grid;
@@ -1158,4 +1179,22 @@ button:not(:disabled):active { transform: scale(.98); }
 @media (prefers-reduced-motion: reduce) {
   .progression-xp-track > i { transition: none; }
   .skill-lane .skill-node.is-available { animation: none; }
+}
+.rank-celebration { display: grid; justify-items: center; gap: 10px; padding: 6px 4px 2px; text-align: center; }
+.rank-celebration-crest-wrap { position: relative; display: grid; width: 98px; height: 98px; place-items: center; overflow: hidden; border: 1px solid color-mix(in srgb, var(--crest-metal) 30%, var(--line)); border-radius: 50%; background: color-mix(in srgb, var(--crest-metal) 8%, var(--glass)); }
+.rank-celebration-crest-wrap::after { position: absolute; inset: -35% auto -35% -45%; width: 30%; transform: rotate(22deg); background: linear-gradient(90deg, transparent, rgb(255 255 255 / 28%), transparent); content: ""; animation: rank-shimmer 820ms ease-out 180ms 1 both; }
+.rank-celebration-crest { transform: scale(.68); animation: rank-crest-in 430ms cubic-bezier(.2,.8,.2,1) 1 both; }
+.rank-celebration h3 { margin: 0; font-size: 1.65rem; }
+.rank-celebration > span:not(.rank-celebration-crest-wrap) { color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; }
+.rank-celebration-progress { display: grid; width: 100%; gap: 6px; margin: 5px 0; }
+.rank-celebration-xp-track { height: 9px; overflow: hidden; border-radius: 999px; background: var(--soft); }
+.rank-celebration-xp-track > i { display: block; width: var(--xp-progress, 0%); height: 100%; border-radius: inherit; background: var(--info-accent); animation: rank-bar-fill 850ms ease-out 150ms both; }
+.rank-celebration-progress > small { color: var(--muted); font-size: .72rem; }
+.rank-celebration > .primary-button { width: 100%; }
+@keyframes rank-crest-in { from { opacity: .4; transform: scale(.55); } to { opacity: 1; transform: scale(1); } }
+@keyframes rank-bar-fill { from { width: 0; } to { width: var(--xp-progress, 0%); } }
+@keyframes rank-shimmer { from { left: -45%; } to { left: 120%; } }
+@media (prefers-reduced-motion: reduce) {
+  .rank-celebration-crest { animation: none; transform: none; }
+  .rank-celebration-crest-wrap::after, .rank-celebration-xp-track > i { animation: none; }
 }

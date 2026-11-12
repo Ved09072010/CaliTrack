@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EXERCISES } from "../data/exercises.js";
 import { BottomSheet, Icon, IconButton, SegmentedControl } from "./ui.jsx";
 import SkillTree from "./SkillTree.jsx";
@@ -12,10 +12,10 @@ function ExerciseRow({ item, onOpen }) {
   </button>;
 }
 
-export default function Library({ workouts, onLogExercise }) {
+export default function Library({ workouts, onLogExercise, initialSection = "Browse", onProgressionChange }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
-  const [activeSection, setActiveSection] = useState("Browse");
+  const [activeSection, setActiveSection] = useState(initialSection);
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [showAll, setShowAll] = useState(false);
@@ -24,6 +24,8 @@ export default function Library({ workouts, onLogExercise }) {
     return EXERCISES.filter((item) => (category === "All" || item.category === category)
       && (!search || `${item.name} ${item.muscles} ${item.category} ${item.difficulty}`.toLowerCase().includes(search)));
   }, [category, query]);
+
+  useEffect(() => setActiveSection(initialSection), [initialSection]);
 
   return <>
     <div className="page-heading"><h1>Library</h1></div>
@@ -39,7 +41,7 @@ export default function Library({ workouts, onLogExercise }) {
         {filtered.length > 5 && <button className="quiet-link" type="button" onClick={() => setShowAll((value) => !value)}>{showAll ? "Show fewer" : "See all"}</button>}
       </section> : <div className="empty-card"><p>No matching exercises.</p><button className="secondary-button" type="button" onClick={() => { setQuery(""); setCategory("All"); }}>Show all</button></div>}
     </>}
-    {activeSection === "Skill tree" && <SkillTree workouts={workouts} onLogExercise={onLogExercise} />}
+    {activeSection === "Skill tree" && <SkillTree workouts={workouts} onLogExercise={onLogExercise} onProgressionChange={onProgressionChange} />}
     <BottomSheet open={Boolean(selectedExercise)} title={selectedExercise?.name || "Exercise"} onClose={() => setSelectedExercise(null)}>
       {selectedExercise && <div className="exercise-details">
         <p className="exercise-meta">{selectedExercise.difficulty} · {selectedExercise.muscles}</p>

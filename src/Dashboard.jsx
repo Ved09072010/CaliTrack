@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { todayString } from "../js/utils.js";
 import { load } from "../js/storage.js";
+import { RANKS } from "../data/progression.js";
 import { getDashboardStats, getWorkoutDaysThisWeek } from "./dashboardStats.js";
 import { getSkillStates } from "./skillTree.js";
+import { getProgress } from "./progression.js";
+import RankCrest from "./RankCrest.jsx";
 import { Icon, IconButton, ProgressRing, SectionHeading } from "./ui.jsx";
 
 const DEFAULT_GOALS = {
@@ -50,7 +53,7 @@ function Stat({ value, label }) {
   return <div className="dashboard-stat"><strong>{value}</strong><span>{label}</span></div>;
 }
 
-export default function Dashboard({ workouts, workoutError, active, onWorkout, onSettings, onLoadDemo, onDismissDemo }) {
+export default function Dashboard({ workouts, workoutError, active, onWorkout, onSettings, onSkillTree, onLoadDemo, onDismissDemo }) {
   const [data, setData] = useState(getDashboardData);
   const today = todayString();
 
@@ -66,6 +69,8 @@ export default function Dashboard({ workouts, workoutError, active, onWorkout, o
   const calories = todaysMeals.reduce((total, meal) => total + meal.calories, 0);
   const stats = getDashboardStats(workouts, today);
   const skills = getSkillStates(workouts, data.skillMastery);
+  const progression = getProgress(workouts, data.skillMastery);
+  const rank = RANKS[progression.rankIndex];
   const masteredSkills = skills.nodes.filter((node) => node.state === "mastered").length;
   const week = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(`${today}T12:00:00`);
@@ -134,18 +139,29 @@ export default function Dashboard({ workouts, workoutError, active, onWorkout, o
         </div>
       </section>
 
-      <details className="home-extra-stats">
-        <summary>Stats</summary>
-        <div className="home-stats">
-          <Stat value={stats.currentStreak} label="Day streak" />
-          <Stat value={stats.totalWorkouts} label="Workouts" />
-          <Stat value={stats.recordsThisMonth} label="PRs this month" />
-        </div>
-        <div className="skill-home-summary">
-          <strong>Skills mastered {masteredSkills} / {skills.nodes.length}</strong>
-          <span>Next up: {skills.nextUp?.exercise || "All skills mastered"}</span>
-        </div>
-      </details>
+      <section className="home-extra-stats">
+        <button className="home-rank-row" type="button" onClick={onSkillTree} aria-label={`Open skill tree, ${progression.rank} rank, level ${progression.level}`}>
+          <RankCrest rank={rank} size={34} />
+          <span className="home-rank-copy">
+            <strong>{progression.rank} · Level {progression.level}</strong>
+            <small>{progression.totalXP.toLocaleString()} XP{progression.rankProgress.nextRank ? ` · ${progression.xpToNextRank.toLocaleString()} to ${progression.rankProgress.nextRank}` : ""}</small>
+            <i className="home-rank-xp" aria-hidden="true"><span style={{ "--xp-progress": `${progression.rankProgress.needed ? Math.min(100, progression.rankProgress.earned / progression.rankProgress.needed * 100) : 100}%` }} /></i>
+          </span>
+          <Icon name="arrow" />
+        </button>
+        <details>
+          <summary>Stats</summary>
+          <div className="home-stats">
+            <Stat value={stats.currentStreak} label="Day streak" />
+            <Stat value={stats.totalWorkouts} label="Workouts" />
+            <Stat value={stats.recordsThisMonth} label="PRs this month" />
+          </div>
+          <div className="skill-home-summary">
+            <strong>Skills mastered {masteredSkills} / {skills.nodes.length}</strong>
+            <span>Next up: {skills.nextUp?.exerciseName || "All skills mastered"}</span>
+          </div>
+        </details>
+      </section>
 
       {showDemoPrompt && <section className="demo-prompt glass-panel" aria-label="Sample data">
         <h2>Try sample data?</h2>

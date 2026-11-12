@@ -36,7 +36,9 @@ export default function Settings({ settings, storageError, onSaveSettings, onImp
         key,
         load(key, key === "settings"
           ? DEFAULT_SETTINGS
-          : key === "skillMastery" ? { mastered: [], seen: [], initialized: false } : []),
+          : key === "skillMastery"
+            ? { mastered: [], seen: [], initialized: false, badgesSeen: [], rankSeen: "Rookie" }
+            : []),
       ]));
       const data = validateAppData(current);
       const backup = { version: 1, exportedAt: new Date().toISOString(), data };
@@ -78,6 +80,7 @@ export default function Settings({ settings, storageError, onSaveSettings, onImp
     try {
       const cleared = Object.fromEntries(APP_DATA_KEYS.map((key) => [key, null]));
       cleared.settings = DEFAULT_SETTINGS;
+      cleared.skillMastery = { mastered: [], seen: [], initialized: false, badgesSeen: [], rankSeen: "Rookie" };
       replaceMany(cleared);
       onReset();
       setSheet("");

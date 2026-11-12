@@ -219,7 +219,14 @@ export function getProgressionCelebrations(previousWorkouts, workoutLog, previou
   const celebrations = [];
 
   if (current.rankIndex > (RANK_INDEX.get(mastery.rankSeen) ?? -1)) {
-    celebrations.push({ type: "rank", rank: current.rank, level: current.level, totalXP: current.totalXP });
+    celebrations.push({
+      type: "rank",
+      rank: current.rank,
+      level: current.level,
+      totalXP: current.totalXP,
+      rankProgress: current.rankProgress,
+      xpToNextRank: current.xpToNextRank,
+    });
   }
   if (newlyMastered.length) {
     celebrations.push({

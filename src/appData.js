@@ -1,6 +1,8 @@
 import { DEFAULT_SETTINGS } from "./settingsData.js";
 import { EXERCISES } from "../data/exercises.js";
 import { SKILL_TREE } from "../data/skillTree.js";
+import { BADGES } from "../data/badges.js";
+import { RANKS } from "../data/progression.js";
 
 export const APP_DATA_KEYS = [
   "workoutLog",
@@ -50,17 +52,33 @@ export function normalizeSettings(value) {
   return settings;
 }
 
-export function normalizeSkillMastery(value = { mastered: [], seen: [], initialized: false }) {
+export function normalizeSkillMastery(value = {
+  mastered: [],
+  seen: [],
+  initialized: false,
+  badgesSeen: [],
+  rankSeen: "Rookie",
+}) {
+  const hasProgressionFields = Array.isArray(value?.badgesSeen) && typeof value?.rankSeen === "string";
+  const badgeIds = new Set(BADGES.map((badge) => badge.id));
+  const rankNames = new Set(RANKS.map((rank) => rank.name));
   if (!value || typeof value !== "object" || Array.isArray(value)
     || !Array.isArray(value.mastered) || !Array.isArray(value.seen)
     || (value.initialized !== undefined && typeof value.initialized !== "boolean")
     || [...value.mastered, ...value.seen].some((id) => typeof id !== "string" || !SKILL_NODE_IDS.has(id))) {
     throw new Error("Skill mastery data must contain valid mastered and seen skill IDs.");
   }
+  if ((value.badgesSeen !== undefined && !Array.isArray(value.badgesSeen))
+    || (value.rankSeen !== undefined && !rankNames.has(value.rankSeen))
+    || (value.badgesSeen || []).some((id) => typeof id !== "string" || !badgeIds.has(id))) {
+    throw new Error("Skill progression data contains an invalid badge or rank.");
+  }
   return {
     mastered: [...new Set(value.mastered)],
     seen: [...new Set(value.seen)],
-    initialized: value.initialized === true,
+    initialized: hasProgressionFields && value.initialized === true,
+    badgesSeen: [...new Set(value.badgesSeen || [])],
+    rankSeen: hasProgressionFields ? value.rankSeen : "Rookie",
   };
 }
 

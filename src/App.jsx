@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { load, replaceMany, save } from "../js/storage.js";
 import { normalizeSettings, normalizeSkillMastery } from "./appData.js";
+import { getProgressionCelebrations, initializeProgressionSeen } from "./progression.js";
+import { RANKS } from "../data/progression.js";
 import { readList } from "./data.js";
 import Dashboard from "./Dashboard.jsx";
 import Diet from "./Diet.jsx";
@@ -10,7 +12,9 @@ import Settings from "./Settings.jsx";
 import { DEFAULT_SETTINGS } from "./settingsData.js";
 import Workouts from "./Workouts.jsx";
 import { clearDemoData, loadDemoData } from "./demo.js";
-import { getNewlyMasteredSkill } from "./skillTree.js";
+import RankCelebration from "./RankCelebration.jsx";
+
+const EMPTY_MASTERY = { mastered: [], seen: [], initialized: false, badgesSeen: [], rankSeen: "Rookie" };
 
 const TABS = [
   { id: "home", label: "Home", icon: <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" /> },
@@ -39,16 +43,19 @@ function initialSettings() {
 function App() {
   const [activeTab, setActiveTab] = useState("home");
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [toastMessage, setToastMessage] = useState("");
+  const [noticeQueue, setNoticeQueue] = useState([]);
   const [systemDark, setSystemDark] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
   const [workoutData, setWorkoutData] = useState(initialWorkoutData);
   const [settingsData, setSettingsData] = useState(initialSettings);
   const [dataVersion, setDataVersion] = useState(0);
+  const [progressionRevision, setProgressionRevision] = useState(0);
+  const [librarySection, setLibrarySection] = useState("Browse");
   const [workoutRequest, setWorkoutRequest] = useState(0);
   const [requestedExercise, setRequestedExercise] = useState("");
   const [activeRoutine, setActiveRoutine] = useState(null);
-  const previousWorkouts = useRef(workoutData.workouts);
-  const workoutSavePending = useRef(false);
+  const progressionSnapshot = useRef(null);
+  const skipProgressionRef = useRef(false);
+  const activeNotice = noticeQueue[0] || null;
   const effectiveTheme = settingsData.settings.theme === "system"
     ? (systemDark ? "dark" : "light")
     : settingsData.settings.theme;
@@ -67,27 +74,51 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const previous = previousWorkouts.current;
-    const current = workoutData.workouts;
-    previousWorkouts.current = current;
-    const wasSavedWorkout = workoutSavePending.current;
-    workoutSavePending.current = false;
-    if (!wasSavedWorkout || previous === current) return;
-
+    let rawMastery;
+    let mastery;
     try {
-      const mastery = normalizeSkillMastery(load("skillMastery", { mastered: [], seen: [], initialized: false }));
-      const newlyMastered = getNewlyMasteredSkill(previous, current, mastery);
-      if (newlyMastered) setToastMessage(`Skill unlocked: ${newlyMastered.exercise}`);
+      rawMastery = load("skillMastery", EMPTY_MASTERY);
+      mastery = normalizeSkillMastery(rawMastery);
     } catch (error) {
-      setToastMessage(error.message);
+      setNoticeQueue((queue) => [...queue, { type: "toast", message: error.message }]);
+      return;
     }
-  }, [workoutData.workouts]);
+
+    if (!progressionSnapshot.current || skipProgressionRef.current) {
+      skipProgressionRef.current = false;
+      const hasProgressionFields = Array.isArray(rawMastery?.badgesSeen)
+        && typeof rawMastery.rankSeen === "string";
+      const initialMastery = mastery.initialized && hasProgressionFields
+        ? mastery
+        : initializeProgressionSeen(workoutData.workouts, mastery);
+      if (JSON.stringify(initialMastery) !== JSON.stringify(mastery)) save("skillMastery", initialMastery);
+      progressionSnapshot.current = { workouts: workoutData.workouts, mastery: initialMastery };
+      return;
+    }
+
+    const previous = progressionSnapshot.current;
+    const result = getProgressionCelebrations(previous.workouts, workoutData.workouts, previous.mastery, mastery);
+    save("skillMastery", result.mastery);
+    progressionSnapshot.current = { workouts: workoutData.workouts, mastery: result.mastery };
+    const notices = result.celebrations.map((celebration) => {
+      if (celebration.type === "rank") return celebration;
+      if (celebration.type === "skill") return {
+        type: "toast",
+        message: celebration.count > 1
+          ? `${celebration.count} skills mastered · +${celebration.xp} XP`
+          : `Skill mastered: ${celebration.exerciseName} · +${celebration.xp} XP`,
+      };
+      if (celebration.type === "level") return { type: "toast", message: `Level ${celebration.level} reached.` };
+      return { type: "toast", message: `Badge earned: ${celebration.name}` };
+    });
+    if (notices.length) setNoticeQueue((queue) => [...queue, ...notices]);
+  }, [workoutData.workouts, progressionRevision]);
 
   useEffect(() => {
-    if (!toastMessage) return undefined;
-    const timeout = window.setTimeout(() => setToastMessage(""), 2500);
+    if (!activeNotice || activeNotice.type === "rank") return undefined;
+    const timeout = window.setTimeout(() => setNoticeQueue((queue) => queue.slice(1)), 2600);
     return () => window.clearTimeout(timeout);
-  }, [toastMessage]);
+  }, [activeNotice]);
 
   useEffect(() => {
     const updateConnection = () => setIsOnline(navigator.onLine);
@@ -101,7 +132,6 @@ function App() {
 
   function persistWorkouts(nextWorkouts) {
     save("workoutLog", nextWorkouts);
-    workoutSavePending.current = nextWorkouts !== workoutData.workouts;
     setWorkoutData({ workouts: nextWorkouts, error: "" });
   }
 
@@ -113,36 +143,43 @@ function App() {
 
   function importAppData(data) {
     replaceMany(data);
+    skipProgressionRef.current = true;
     setSettingsData({ settings: data.settings, error: "" });
     setWorkoutData({ workouts: data.workoutLog, error: "" });
     setDataVersion((version) => version + 1);
+    setProgressionRevision((version) => version + 1);
   }
 
   function resetAppData() {
+    skipProgressionRef.current = true;
     setSettingsData({ settings: DEFAULT_SETTINGS, error: "" });
     setWorkoutData({ workouts: [], error: "" });
     setDataVersion((version) => version + 1);
+    setProgressionRevision((version) => version + 1);
   }
 
   function refreshSavedData() {
     setSettingsData(initialSettings());
     setWorkoutData(initialWorkoutData());
     setDataVersion((version) => version + 1);
+    setProgressionRevision((version) => version + 1);
   }
 
   function addDemoData() {
     const loaded = loadDemoData();
     const settings = { ...load("settings", DEFAULT_SETTINGS), demoPromptDismissed: true };
     save("settings", settings);
+    skipProgressionRef.current = true;
     refreshSavedData();
-    setToastMessage(loaded ? "Sample data loaded." : "Sample data already loaded.");
+    setNoticeQueue((queue) => [...queue, { type: "toast", message: loaded ? "Sample data loaded." : "Sample data already loaded." }]);
     return loaded;
   }
 
   function removeDemoData() {
     clearDemoData();
+    skipProgressionRef.current = true;
     refreshSavedData();
-    setToastMessage("Sample data removed.");
+    setNoticeQueue((queue) => [...queue, { type: "toast", message: "Sample data removed." }]);
   }
 
   function dismissDemoPrompt() {
@@ -177,8 +214,15 @@ function App() {
   }
 
   function chooseTab(tab) {
+    if (tab === "library") setLibrarySection("Browse");
     setActiveTab(tab);
     document.getElementById(`panel-${tab}`)?.focus({ preventScroll: true });
+  }
+
+  function openSkillTree() {
+    setLibrarySection("Skill tree");
+    setActiveTab("library");
+    document.getElementById("panel-library")?.focus({ preventScroll: true });
   }
 
   function handleTabKeyDown(event, index) {
@@ -197,7 +241,12 @@ function App() {
     <div className="app-shell" data-theme={effectiveTheme} data-active-tab={activeTab}>
       <main id="main-content">
         {!isOnline && <p className="offline-notice" role="status">Offline mode · Your saved data stays on this device.</p>}
-        {toastMessage && <p className="app-toast" role="status">{toastMessage}</p>}
+        {activeNotice?.type === "toast" && <p className="app-toast" role="status">{activeNotice.message}</p>}
+        <RankCelebration
+          notice={activeNotice?.type === "rank" ? activeNotice : null}
+          rank={activeNotice?.type === "rank" ? RANKS.find((rank) => rank.name === activeNotice.rank) : null}
+          onClose={() => setNoticeQueue((queue) => queue.slice(1))}
+        />
         <section id="panel-home" className="tab-panel" role="tabpanel" aria-labelledby="tab-home" tabIndex="-1" hidden={activeTab !== "home"}>
           <Dashboard
             key={`dashboard-${dataVersion}`}
@@ -205,8 +254,8 @@ function App() {
             workoutError={workoutData.error}
             active={activeTab === "home"}
             onWorkout={openWorkout}
-            onTab={chooseTab}
             onSettings={() => chooseTab("settings")}
+            onSkillTree={openSkillTree}
             onLoadDemo={addDemoData}
             onDismissDemo={dismissDemoPrompt}
           />
@@ -245,6 +294,8 @@ function App() {
             key={`library-${dataVersion}`}
             workouts={workoutData.workouts}
             onLogExercise={logLibraryExercise}
+            initialSection={librarySection}
+            onProgressionChange={() => setProgressionRevision((version) => version + 1)}
           />
         </section>
 
