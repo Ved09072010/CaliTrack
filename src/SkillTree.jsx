@@ -1,12 +1,15 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { load, save } from "../js/storage.js";
-import { PROGRESSIONS, EXERCISES } from "../data/exercises.js";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { EXERCISES, PROGRESSIONS } from "../data/exercises.js";
+import { RANKS, TIER_XP } from "../data/progression.js";
 import { SKILL_BRANCHES } from "../data/skillTree.js";
+import { load, save } from "../js/storage.js";
 import { normalizeSkillMastery } from "./appData.js";
-import { getSkillStates, markExistingSkillsSeen } from "./skillTree.js";
-import { BottomSheet, Icon } from "./ui.jsx";
+import { getBadges, getProgress } from "./progression.js";
+import { getSkillStates } from "./skillTree.js";
+import { BottomSheet, Icon, IconButton } from "./ui.jsx";
+import RankCrest from "./RankCrest.jsx";
 
-const EMPTY_MASTERY = { mastered: [], seen: [], initialized: false };
+const EMPTY_MASTERY = { mastered: [], seen: [], initialized: false, badgesSeen: [], rankSeen: "Rookie" };
 const STATE_LABELS = {
   locked: "Locked",
   available: "Available",
@@ -17,9 +20,13 @@ const STATE_LABELS = {
 function readMastery() {
   try {
     return { value: normalizeSkillMastery(load("skillMastery", EMPTY_MASTERY)), error: "" };
-  } catch (readError) {
-    return { value: EMPTY_MASTERY, error: readError.message };
+  } catch (error) {
+    return { value: EMPTY_MASTERY, error: error.message };
   }
+}
+
+function goalLabel(goal) {
+  return `${goal.sets} × ${goal.target} ${goal.type}`;
 }
 
 function StatusMark({ state }) {
@@ -30,45 +37,83 @@ function StatusMark({ state }) {
   </span>;
 }
 
-function goalLabel(goal) {
-  return `${goal.sets} × ${goal.target} ${goal.type}`;
+function XpBar({ earned, needed, label }) {
+  const percent = needed ? Math.min(100, (earned / needed) * 100) : 100;
+  return <div
+    className="progression-xp-track"
+    role="progressbar"
+    aria-label={label}
+    aria-valuemin="0"
+    aria-valuemax={needed || 1}
+    aria-valuenow={Math.min(earned, needed)}
+    style={{ "--xp-progress": `${percent}%` }}
+  ><i /></div>;
 }
 
-export default function SkillTree({ workouts, onLogExercise }) {
-  const [savedMastery, setSavedMastery] = useState(readMastery);
-  const [activeBranch, setActiveBranch] = useState(SKILL_BRANCHES[0]);
-  const [selectedNode, setSelectedNode] = useState(null);
-  const [selectedPath, setSelectedPath] = useState(null);
-  const [showAllPaths, setShowAllPaths] = useState(false);
-  const [connectionLayout, setConnectionLayout] = useState({ width: 1, height: 1, edges: [] });
-  const [error, setError] = useState(savedMastery.error);
+function SkillOverview({ nodes, progress, onOpenBranch, onOpenBadges, badges }) {
+  const rank = RANKS[progress.rankIndex];
+  return <div className="skill-overview">
+    <section className="skill-profile glass-panel" aria-label="Progress profile">
+      <RankCrest rank={rank} />
+      <div className="skill-profile-main">
+        <div className="skill-profile-heading"><h2>{progress.rank}</h2><span>Level {progress.level}</span></div>
+        <strong className="skill-profile-xp">{progress.totalXP.toLocaleString()} XP</strong>
+        <XpBar earned={progress.rankProgress.earned} needed={progress.rankProgress.needed} label="Progress to next rank" />
+        <div className="skill-profile-foot">
+          <span>{progress.rankProgress.nextRank ? `${progress.xpToNextRank.toLocaleString()} XP to ${progress.rankProgress.nextRank}` : "Highest rank"}</span>
+          <span>Level progress {progress.levelProgress.earned} / {progress.levelProgress.needed} XP</span>
+        </div>
+      </div>
+    </section>
+
+    <div className="skill-overview-grid">
+      {SKILL_BRANCHES.map((branch) => {
+        const branchNodes = nodes.filter((node) => node.branch === branch);
+        const mastered = branchNodes.filter((node) => node.state === "mastered").length;
+        const nextUp = branchNodes.find((node) => node.state === "available" || node.state === "in-progress");
+        const branchProgress = progress.branches[branch];
+        return <button className="skill-overview-tile" type="button" key={branch} onClick={() => onOpenBranch(branch)}>
+          <span className="skill-tile-top"><strong>{branch}</strong><Icon name="arrow" /></span>
+          <span className="skill-mini-map" aria-hidden="true">
+            {branchNodes.map((node) => <i className={`is-${node.state}`} key={node.id} />)}
+          </span>
+          <span className="skill-tile-stats"><strong>{mastered} / {branchNodes.length}</strong><small>Level {branchProgress.level}</small></span>
+          <span className="skill-tile-next"><small>Next up</small><strong>{nextUp?.exerciseName || "Complete"}</strong></span>
+        </button>;
+      })}
+      <button className="skill-overview-tile skill-badges-tile" type="button" onClick={onOpenBadges}>
+        <span className="skill-tile-top"><strong>Badges</strong><Icon name="arrow" /></span>
+        <span className="skill-badge-tile-count">{badges.filter((badge) => badge.earned).length} <small>/ {badges.length}</small></span>
+        <span className="skill-tile-next"><small>Earned</small><strong>Personal milestones</strong></span>
+      </button>
+    </div>
+  </div>;
+}
+
+function SkillBranch({ branch, nodes, progress, onBack, onOpenNode, onOpenPath }) {
   const stageRef = useRef(null);
   const nodeRefs = useRef(new Map());
-  const mastery = savedMastery.value;
-  const states = useMemo(() => getSkillStates(workouts, mastery), [workouts, mastery]);
-  const nodesInBranch = useMemo(
-    () => states.nodes.filter((node) => node.branch === activeBranch),
-    [states.nodes, activeBranch],
-  );
-  const selected = states.nodes.find((node) => node.id === selectedNode?.id) || null;
-  const exerciseDetails = selected && EXERCISES.find((item) => item.id === selected.exercise);
-  const masteredCount = states.nodes.filter((node) => node.state === "mastered").length;
-  const manualMastery = useMemo(() => new Set(mastery.mastered), [mastery.mastered]);
-  const seen = useMemo(() => new Set(mastery.seen), [mastery.seen]);
+  const [layout, setLayout] = useState({ width: 1, height: 1, edges: [] });
+  const branchNodes = nodes.filter((node) => node.branch === branch);
+  const lines = [...new Set(branchNodes.map((node) => node.line))];
+  const lineNodes = lines.map((line) => ({
+    line,
+    nodes: branchNodes.filter((node) => node.line === line),
+  }));
+  const branchProgress = progress.branches[branch];
 
   useLayoutEffect(() => {
     const stage = stageRef.current;
     if (!stage) return undefined;
-
-    function updateConnections() {
+    const update = () => {
       const bounds = stage.getBoundingClientRect();
       const edges = [];
-      nodesInBranch.forEach((node) => {
+      branchNodes.forEach((node) => {
         const target = nodeRefs.current.get(node.id);
         if (!target) return;
         const targetBounds = target.getBoundingClientRect();
         node.requires.forEach((requiredId) => {
-          if (!nodesInBranch.some((item) => item.id === requiredId)) return;
+          if (!branchNodes.some((item) => item.id === requiredId)) return;
           const source = nodeRefs.current.get(requiredId);
           if (!source) return;
           const sourceBounds = source.getBoundingClientRect();
@@ -76,37 +121,109 @@ export default function SkillTree({ workouts, onLogExercise }) {
           const y1 = sourceBounds.bottom - bounds.top;
           const x2 = targetBounds.left + targetBounds.width / 2 - bounds.left;
           const y2 = targetBounds.top - bounds.top;
-          const bend = Math.max(12, (y2 - y1) / 2);
+          const bend = Math.max(12, Math.abs(y2 - y1) / 2);
           edges.push({
             id: `${requiredId}-${node.id}`,
             path: `M ${x1} ${y1} C ${x1} ${y1 + bend}, ${x2} ${y2 - bend}, ${x2} ${y2}`,
           });
         });
       });
-      setConnectionLayout((current) => (
-        current.width === stage.clientWidth
-        && current.height === stage.clientHeight
-        && JSON.stringify(current.edges) === JSON.stringify(edges)
+      setLayout((current) => {
+        const width = stage.clientWidth || 1;
+        const height = stage.clientHeight || 1;
+        return current.width === width && current.height === height
+          && JSON.stringify(current.edges) === JSON.stringify(edges)
           ? current
-          : { width: stage.clientWidth || 1, height: stage.clientHeight || 1, edges }
-      ));
-    }
+          : { width, height, edges };
+      });
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [branchNodes]);
 
-    updateConnections();
-    window.addEventListener("resize", updateConnections);
-    return () => window.removeEventListener("resize", updateConnections);
-  }, [nodesInBranch]);
+  return <>
+    <header className="skill-branch-header">
+      <IconButton label="Back to skill overview" onClick={onBack}><Icon name="back" /></IconButton>
+      <div><h2>{branch}</h2><span>Level {branchProgress.level} · {branchProgress.xp.toLocaleString()} XP</span></div>
+      <span className="skill-branch-count">{branchNodes.filter((node) => node.state === "mastered").length}/{branchNodes.length}</span>
+    </header>
+    <div className="skill-tree-stage skill-lane-stage" ref={stageRef}>
+      <svg className="skill-tree-connectors" viewBox={`0 0 ${layout.width} ${layout.height}`} aria-hidden="true" focusable="false">
+        {layout.edges.map((edge) => <path key={edge.id} d={edge.path} />)}
+      </svg>
+      <div className="skill-lanes">
+        {lineNodes.map(({ line, nodes: laneNodes }) => <section className="skill-lane" key={line} aria-label={`${line} line`}>
+          <h3>{line}</h3>
+          {laneNodes.map((node) => <button
+            className={`skill-node is-${node.state}`}
+            type="button"
+            key={node.id}
+            ref={(element) => {
+              if (element) nodeRefs.current.set(node.id, element);
+              else nodeRefs.current.delete(node.id);
+            }}
+            aria-label={`${node.exerciseName}, Tier ${node.tier}, ${STATE_LABELS[node.state]}, ${node.bestProgress}`}
+            onClick={() => onOpenNode(node)}
+          >
+            <StatusMark state={node.state} />
+            <span className="skill-node-copy">
+              <strong>{node.exerciseName}</strong>
+              <span className="skill-tier-pips" aria-label={`Tier ${node.tier}`}>
+                {Array.from({ length: 6 }, (_, index) => <i className={index < node.tier ? "is-filled" : ""} key={index} />)}
+              </span>
+              <small>{node.bestProgress}</small>
+            </span>
+            <span className="skill-node-state">{STATE_LABELS[node.state]}</span>
+          </button>)}
+        </section>)}
+      </div>
+    </div>
+    <details className="skill-progression-refs">
+      <summary>Progression guides</summary>
+      {PROGRESSIONS.map((path) => <button className="progression-row" type="button" key={path.name} onClick={() => onOpenPath(path)}>
+        <span><strong>{path.name}</strong><small>{path.steps.length} steps</small></span><Icon name="arrow" />
+      </button>)}
+    </details>
+  </>;
+}
 
-  useEffect(() => {
-    if (mastery.initialized || error) return;
-    updateMastery(markExistingSkillsSeen(mastery, workouts));
-  }, [mastery.initialized, error, workouts]);
+function SimpleBadgeGrid({ badges, onBack }) {
+  return <>
+    <header className="skill-branch-header">
+      <IconButton label="Back to skill overview" onClick={onBack}><Icon name="back" /></IconButton>
+      <div><h2>Badges</h2><span>{badges.filter((badge) => badge.earned).length} / {badges.length} earned</span></div>
+    </header>
+    <div className="skill-badge-grid">
+      {badges.map((badge) => <article className={`skill-badge-card${badge.earned ? " is-earned" : " is-locked"}`} key={badge.id}>
+        <span className="skill-badge-silhouette" aria-hidden="true" />
+        <span><strong>{badge.name}</strong><small>{badge.earned ? "Earned" : badge.requirement}</small></span>
+      </article>)}
+    </div>
+  </>;
+}
+
+export default function SkillTree({ workouts, onLogExercise, onProgressionChange }) {
+  const [savedMastery, setSavedMastery] = useState(readMastery);
+  const [view, setView] = useState("overview");
+  const [activeBranch, setActiveBranch] = useState("");
+  const [selectedNodeId, setSelectedNodeId] = useState("");
+  const [selectedPath, setSelectedPath] = useState(null);
+  const [error, setError] = useState(savedMastery.error);
+  const mastery = savedMastery.value;
+  const states = useMemo(() => getSkillStates(workouts, mastery), [workouts, mastery]);
+  const progress = useMemo(() => getProgress(workouts, mastery), [workouts, mastery]);
+  const badges = useMemo(() => getBadges(workouts, mastery, progress), [workouts, mastery, progress]);
+  const selected = states.nodes.find((node) => node.id === selectedNodeId) || null;
+  const exerciseDetails = selected && EXERCISES.find((item) => item.id === selected.exercise);
+  const manualMastery = new Set(mastery.mastered);
 
   function updateMastery(next) {
     try {
       save("skillMastery", next);
       setSavedMastery({ value: next, error: "" });
       setError("");
+      onProgressionChange?.();
       return true;
     } catch (saveError) {
       setError(saveError.message);
@@ -115,100 +232,72 @@ export default function SkillTree({ workouts, onLogExercise }) {
   }
 
   function openNode(node) {
-    if (!seen.has(node.id) && !error) {
+    if (!mastery.seen.includes(node.id) && !error) {
       const next = { ...mastery, seen: [...mastery.seen, node.id] };
       if (!updateMastery(next)) return;
     }
-    setSelectedNode(node);
+    setSelectedNodeId(node.id);
   }
 
   function toggleManualMastery() {
     if (!selected) return;
-    const nextMastered = manualMastery.has(selected.id)
+    const mastered = manualMastery.has(selected.id)
       ? mastery.mastered.filter((id) => id !== selected.id)
       : [...mastery.mastered, selected.id];
-    updateMastery({ ...mastery, mastered: nextMastered });
+    updateMastery({ ...mastery, mastered });
   }
 
   function jumpToPrerequisite(node) {
     setActiveBranch(node.branch);
-    openNode(node);
+    setView("branch");
+    setSelectedNodeId(node.id);
   }
 
-  function nodeCounts(branch) {
-    const branchNodes = states.nodes.filter((node) => node.branch === branch);
-    return `${branchNodes.filter((node) => node.state === "mastered").length}/${branchNodes.length}`;
-  }
+  const visibleBranches = states.nodes.filter((node) => node.branch === activeBranch);
 
   return <>
-    <div className="skill-branch-chips" role="group" aria-label="Skill branches">
-      {SKILL_BRANCHES.map((branch) => <button
-        className={branch === activeBranch ? "is-selected" : ""}
-        type="button"
-        aria-pressed={branch === activeBranch}
-        key={branch}
-        onClick={() => setActiveBranch(branch)}
-      >{branch}<small>{nodeCounts(branch)}</small></button>)}
-    </div>
-
-    {workouts.length === 0 && masteredCount === 0 && <p className="skill-tree-empty">Start with any open skill.</p>}
-    {states.nextUp && <p className="skill-next-up">Next up: <strong>{states.nextUp.exerciseName}</strong></p>}
     {error && <p className="form-message is-error" role="alert">{error}</p>}
+    {view === "overview" && <SkillOverview
+      nodes={states.nodes}
+      progress={progress}
+      badges={badges}
+      onOpenBranch={(branch) => { setActiveBranch(branch); setView("branch"); }}
+      onOpenBadges={() => setView("badges")}
+    />}
+    {view === "branch" && <SkillBranch
+      branch={activeBranch}
+      nodes={visibleBranches}
+      progress={progress}
+      onBack={() => setView("overview")}
+      onOpenNode={openNode}
+      onOpenPath={setSelectedPath}
+    />}
+    {view === "badges" && <SimpleBadgeGrid badges={badges} onBack={() => setView("overview")} />}
 
-    <div className="skill-tree-stage" ref={stageRef}>
-      <svg className="skill-tree-connectors" viewBox={`0 0 ${connectionLayout.width} ${connectionLayout.height}`} aria-hidden="true" focusable="false">
-        {connectionLayout.edges.map((connection) => <path key={connection.id} d={connection.path} />)}
-      </svg>
-      <div className="skill-tree-nodes">
-        {nodesInBranch.map((node, index) => <button
-          className={`skill-node is-${node.state}`}
-          data-lane={index % 2 ? "right" : "left"}
-          type="button"
-          key={node.id}
-          ref={(element) => {
-            if (element) nodeRefs.current.set(node.id, element);
-            else nodeRefs.current.delete(node.id);
-          }}
-          aria-label={`${node.exerciseName}, ${STATE_LABELS[node.state]}, ${node.bestProgress}`}
-          onClick={() => openNode(node)}
-        >
-          <StatusMark state={node.state} />
-          <span className="skill-node-copy">
-            <strong>{node.exerciseName}{mastery.initialized && node.state === "mastered" && !seen.has(node.id) && <small className="skill-new-marker">New</small>}</strong>
-            <small>{node.bestProgress}</small>
-            <span className="skill-progress-track"><i style={{ "--skill-progress": `${node.progress * 100}%` }} /></span>
-          </span>
-          <span className="skill-node-state">{STATE_LABELS[node.state]}</span>
-        </button>)}
-      </div>
-    </div>
-
-    <section className="skill-progression-refs" aria-label="Progression paths">
-      <h2>Progressions</h2>
-      {PROGRESSIONS.slice(0, showAllPaths ? undefined : 5).map((path) => <button className="progression-row" type="button" key={path.name} onClick={() => setSelectedPath(path)}>
-        <span><strong>{path.name}</strong><small>{path.steps.length} steps</small></span><Icon name="arrow" />
-      </button>)}
-      {PROGRESSIONS.length > 5 && <button className="quiet-link" type="button" onClick={() => setShowAllPaths((value) => !value)}>{showAllPaths ? "Show fewer" : "See all"}</button>}
-    </section>
-
-    <BottomSheet open={Boolean(selected)} title={selected?.exerciseName || "Skill"} onClose={() => setSelectedNode(null)}>
+    <BottomSheet open={Boolean(selected)} title={selected?.exerciseName || "Skill"} onClose={() => setSelectedNodeId("")}>
       {selected && <div className="skill-node-sheet">
         <p className="skill-node-description">{exerciseDetails?.difficulty} · {exerciseDetails?.muscles}</p>
+        <p><strong>Tier</strong><span>{selected.tier} · {["", "Beginner", "Novice", "Intermediate", "Advanced", "Expert", "Elite"][selected.tier]}</span></p>
         <p><strong>Goal</strong><span>{goalLabel(selected.goal)}</span></p>
         <p><strong>Your best</strong><span>{selected.bestProgress}</span></p>
-        <span className="skill-progress-track" role="progressbar" aria-label="Goal progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(selected.progress * 100)}>
-          <i style={{ "--skill-progress": `${selected.progress * 100}%` }} />
-        </span>
+        <p><strong>Reward</strong><span>+{TIER_XP[selected.tier]} XP</span></p>
+        <XpBar earned={selected.qualifyingSets} needed={selected.goal.sets} label="Skill goal progress" />
         {selected.requires.length > 0 && <div className="skill-prerequisites">
           <strong>Requires</strong>
           {selected.requires.map((id) => {
             const prerequisite = states.nodes.find((node) => node.id === id);
-            return prerequisite && <button type="button" key={id} onClick={() => jumpToPrerequisite(prerequisite)}>
-              {prerequisite.exercise} · {STATE_LABELS[prerequisite.state]}
+            const crossBranch = prerequisite || getSkillStates(workouts, mastery).nodes.find((node) => node.id === id);
+            return crossBranch && <button type="button" key={id} onClick={() => jumpToPrerequisite(crossBranch)}>
+              {crossBranch.exerciseName} · {STATE_LABELS[crossBranch.state]}
             </button>;
           })}
         </div>}
-        <button className="primary-button" type="button" onClick={() => { onLogExercise(selected.exerciseName); setSelectedNode(null); }}>Log this</button>
+        {exerciseDetails && <details className="skill-exercise-guide">
+          <summary>Form guide</summary>
+          <ol>{exerciseDetails.steps.map((step) => <li key={step}>{step}</li>)}</ol>
+          <p>{exerciseDetails.cues}</p>
+        </details>}
+        <button className="primary-button" type="button" onClick={() => { onLogExercise(selected.exerciseName); setSelectedNodeId(""); }}>Log this</button>
         <button className="skill-manual-toggle" type="button" role="switch" aria-checked={manualMastery.has(selected.id)} disabled={Boolean(error)} onClick={toggleManualMastery}>
           <span>Mark as mastered</span><i aria-hidden="true">{manualMastery.has(selected.id) ? "On" : "Off"}</i>
         </button>
@@ -216,7 +305,10 @@ export default function SkillTree({ workouts, onLogExercise }) {
     </BottomSheet>
 
     <BottomSheet open={Boolean(selectedPath)} title={selectedPath?.name || "Progression"} onClose={() => setSelectedPath(null)}>
-      {selectedPath && <ol className="progression-steps">{selectedPath.steps.map((step) => <li key={`${selectedPath.name}-${step.exercise}`}><strong>{step.exercise}</strong><span>{step.unlock}</span><button className="secondary-button" type="button" onClick={() => { onLogExercise(step.exercise); setSelectedPath(null); }}>Log</button></li>)}</ol>}
+      {selectedPath && <ol className="progression-steps">{selectedPath.steps.map((step) => <li key={`${selectedPath.name}-${step.exercise}`}>
+        <strong>{step.exercise}</strong><span>{step.unlock}</span>
+        <button className="secondary-button" type="button" onClick={() => { onLogExercise(step.exercise); setSelectedPath(null); }}>Log</button>
+      </li>)}</ol>}
     </BottomSheet>
   </>;
 }

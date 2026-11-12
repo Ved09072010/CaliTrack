@@ -6,6 +6,7 @@ export function Icon({ name, size = 20 }) {
     plus: <path d="M12 5v14m-7-7h14" />,
     close: <path d="m6 6 12 12M18 6 6 18" />,
     arrow: <path d="m9 18 6-6-6-6" />,
+    back: <path d="m15 18-6-6 6-6M9 12h11" />,
     more: <><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></>,
   };
   return (
