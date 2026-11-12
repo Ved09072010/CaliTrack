@@ -4,6 +4,78 @@ import {
   getSkillStates,
   markExistingSkillsSeen,
 } from "../src/skillTree.js";
+import { EXERCISES } from "../data/exercises.js";
+import { SKILL_BRANCHES, SKILL_TREE } from "../data/skillTree.js";
+
+const originalSkills = {
+  "wall-push-up": "Wall push-up",
+  "incline-push-up": "Incline push-up",
+  "knee-push-up": "Knee push-up",
+  "push-up": "Push-up",
+  "diamond-push-up": "Diamond push-up",
+  "archer-push-up": "Archer push-up",
+  "pike-push-up": "Pike push-up",
+  dips: "Dips",
+  "dead-hang": "Dead hang",
+  "scapular-pull-up": "Scapular pull-up",
+  "inverted-row": "Inverted row",
+  "negative-pull-up": "Negative pull-up",
+  "chin-up": "Chin-up",
+  "pull-up": "Pull-up",
+  "bodyweight-squat": "Bodyweight squat",
+  "reverse-lunge": "Reverse lunge",
+  "split-squat": "Split squat",
+  "step-up": "Step-up",
+  "glute-bridge": "Glute bridge",
+  "single-leg-glute-bridge": "Single-leg glute bridge",
+  "dead-bug": "Dead bug",
+  "bird-dog": "Bird dog",
+  plank: "Plank",
+  "side-plank": "Side plank",
+  "hollow-hold": "Hollow hold",
+  "handstand-practice": "Handstand practice",
+  "wall-handstand-hold": "Wall handstand hold",
+  "tuck-l-sit": "Tuck L-sit",
+  "muscle-up-transition": "Muscle-up transition drill",
+  "tuck-front-lever": "Tuck front lever hold",
+  "planche-lean": "Planche lean",
+  "muscle-up": "Muscle-up",
+};
+
+assert.equal(SKILL_TREE.length, 90);
+assert.equal(new Set(SKILL_TREE.map((node) => node.id)).size, SKILL_TREE.length);
+assert.equal(new Set(EXERCISES.map((exercise) => exercise.id)).size, EXERCISES.length);
+const exerciseIds = new Set(EXERCISES.map((exercise) => exercise.id));
+const nodesById = new Map(SKILL_TREE.map((node) => [node.id, node]));
+SKILL_TREE.forEach((node) => {
+  assert.ok(exerciseIds.has(node.exercise), `${node.id} exercise resolves`);
+  assert.ok(node.tier >= 1 && node.tier <= 6, `${node.id} tier is valid`);
+  assert.ok(["reps", "seconds"].includes(node.goal.type), `${node.id} goal type is valid`);
+  assert.ok(node.goal.target > 0 && node.goal.sets > 0, `${node.id} goal is positive`);
+  node.requires.forEach((id) => assert.ok(nodesById.has(id), `${node.id} prerequisite ${id} resolves`));
+});
+SKILL_BRANCHES.forEach((branch) => {
+  const branchNodes = SKILL_TREE.filter((node) => node.branch === branch);
+  assert.equal(branchNodes.length, 18, `${branch} has 18 skills`);
+  assert.ok(new Set(branchNodes.map((node) => node.line)).size >= 2);
+});
+Object.entries(originalSkills).forEach(([id, name]) => {
+  const node = nodesById.get(id);
+  assert.ok(node, `legacy node ${id} remains`);
+  assert.equal(EXERCISES.find((exercise) => exercise.id === node.exercise)?.name, name);
+});
+const reached = new Set();
+function visit(id, active = new Set()) {
+  assert.ok(!active.has(id), `cycle detected at ${id}`);
+  if (reached.has(id)) return;
+  active.add(id);
+  const node = nodesById.get(id);
+  node.requires.forEach((requiredId) => visit(requiredId, active));
+  active.delete(id);
+  reached.add(id);
+}
+SKILL_TREE.forEach((node) => visit(node.id));
+assert.equal(reached.size, SKILL_TREE.length, "all nodes are reachable from roots");
 
 function nodeState(result, id) {
   return result.nodes.find((node) => node.id === id);
@@ -92,6 +164,6 @@ result = getSkillStates([
   workout("Dead bug", [8, 8]),
 ]);
 assert.equal(result.nextUp.id, "dead-bug");
-assert.equal(result.nodes.length, 32);
+assert.equal(result.nodes.length, 90);
 
-console.log("Skill tree tests passed: states, branching prerequisites, goal types, name matching, overrides, and next up.");
+console.log("Skill tree tests passed: 90-node integrity, legacy IDs, states, prerequisites, goals, matching, overrides, and next up.");
