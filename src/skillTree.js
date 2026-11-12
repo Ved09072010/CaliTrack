@@ -1,4 +1,7 @@
 import { SKILL_TREE } from "../data/skillTree.js";
+import { EXERCISES } from "../data/exercises.js";
+
+const EXERCISE_NAMES = new Map(EXERCISES.map((exercise) => [exercise.id, exercise.name]));
 
 function normalizedName(value) {
   return String(value || "")
@@ -40,8 +43,9 @@ function masteredOverrides(overrides) {
 function getBestSets(workouts, node) {
   let bestValue = 0;
   let bestSetCount = 0;
+  const exerciseName = EXERCISE_NAMES.get(node.exercise);
   workouts.forEach((workout) => {
-    if (!workout || !namesMatch(workout.exercise, node.exercise) || !Array.isArray(workout.sets)) return;
+    if (!workout || !exerciseName || !namesMatch(workout.exercise, exerciseName) || !Array.isArray(workout.sets)) return;
     const values = workout.sets.map((set) => Number(set?.[node.goal.type]) || 0);
     bestValue = Math.max(bestValue, ...values);
     bestSetCount = Math.max(bestSetCount, values.filter((value) => value >= node.goal.target).length);
@@ -87,6 +91,7 @@ export function getSkillStates(workoutLog = [], masteryOverrides = []) {
     const details = progress.get(node.id);
     const result = {
       ...node,
+      exerciseName: EXERCISE_NAMES.get(node.exercise),
       state,
       bestValue: details.bestValue,
       qualifyingSets: details.bestSetCount,

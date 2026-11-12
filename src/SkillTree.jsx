@@ -51,7 +51,7 @@ export default function SkillTree({ workouts, onLogExercise }) {
     [states.nodes, activeBranch],
   );
   const selected = states.nodes.find((node) => node.id === selectedNode?.id) || null;
-  const exerciseDetails = selected && EXERCISES.find((item) => item.name === selected.exercise);
+  const exerciseDetails = selected && EXERCISES.find((item) => item.id === selected.exercise);
   const masteredCount = states.nodes.filter((node) => node.state === "mastered").length;
   const manualMastery = useMemo(() => new Set(mastery.mastered), [mastery.mastered]);
   const seen = useMemo(() => new Set(mastery.seen), [mastery.seen]);
@@ -152,7 +152,7 @@ export default function SkillTree({ workouts, onLogExercise }) {
     </div>
 
     {workouts.length === 0 && masteredCount === 0 && <p className="skill-tree-empty">Start with any open skill.</p>}
-    {states.nextUp && <p className="skill-next-up">Next up: <strong>{states.nextUp.exercise}</strong></p>}
+    {states.nextUp && <p className="skill-next-up">Next up: <strong>{states.nextUp.exerciseName}</strong></p>}
     {error && <p className="form-message is-error" role="alert">{error}</p>}
 
     <div className="skill-tree-stage" ref={stageRef}>
@@ -169,12 +169,12 @@ export default function SkillTree({ workouts, onLogExercise }) {
             if (element) nodeRefs.current.set(node.id, element);
             else nodeRefs.current.delete(node.id);
           }}
-          aria-label={`${node.exercise}, ${STATE_LABELS[node.state]}, ${node.bestProgress}`}
+          aria-label={`${node.exerciseName}, ${STATE_LABELS[node.state]}, ${node.bestProgress}`}
           onClick={() => openNode(node)}
         >
           <StatusMark state={node.state} />
           <span className="skill-node-copy">
-            <strong>{node.exercise}{mastery.initialized && node.state === "mastered" && !seen.has(node.id) && <small className="skill-new-marker">New</small>}</strong>
+            <strong>{node.exerciseName}{mastery.initialized && node.state === "mastered" && !seen.has(node.id) && <small className="skill-new-marker">New</small>}</strong>
             <small>{node.bestProgress}</small>
             <span className="skill-progress-track"><i style={{ "--skill-progress": `${node.progress * 100}%` }} /></span>
           </span>
@@ -191,7 +191,7 @@ export default function SkillTree({ workouts, onLogExercise }) {
       {PROGRESSIONS.length > 5 && <button className="quiet-link" type="button" onClick={() => setShowAllPaths((value) => !value)}>{showAllPaths ? "Show fewer" : "See all"}</button>}
     </section>
 
-    <BottomSheet open={Boolean(selected)} title={selected?.exercise || "Skill"} onClose={() => setSelectedNode(null)}>
+    <BottomSheet open={Boolean(selected)} title={selected?.exerciseName || "Skill"} onClose={() => setSelectedNode(null)}>
       {selected && <div className="skill-node-sheet">
         <p className="skill-node-description">{exerciseDetails?.difficulty} · {exerciseDetails?.muscles}</p>
         <p><strong>Goal</strong><span>{goalLabel(selected.goal)}</span></p>
@@ -208,7 +208,7 @@ export default function SkillTree({ workouts, onLogExercise }) {
             </button>;
           })}
         </div>}
-        <button className="primary-button" type="button" onClick={() => { onLogExercise(selected.exercise); setSelectedNode(null); }}>Log this</button>
+        <button className="primary-button" type="button" onClick={() => { onLogExercise(selected.exerciseName); setSelectedNode(null); }}>Log this</button>
         <button className="skill-manual-toggle" type="button" role="switch" aria-checked={manualMastery.has(selected.id)} disabled={Boolean(error)} onClick={toggleManualMastery}>
           <span>Mark as mastered</span><i aria-hidden="true">{manualMastery.has(selected.id) ? "On" : "Off"}</i>
         </button>
