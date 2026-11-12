@@ -1136,12 +1136,15 @@ button:not(:disabled):active { transform: scale(.98); }
 .skill-exercise-guide ol { display: grid; gap: 7px; margin: 0; padding-left: 20px; color: var(--muted); font-size: .8rem; line-height: 1.4; }
 .skill-exercise-guide p { color: var(--muted); font-size: .8rem; }
 .skill-badge-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.skill-badge-card { display: grid; min-width: 0; min-height: 82px; grid-template-columns: 28px minmax(0, 1fr); align-items: center; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--glass); }
+.skill-badge-card { display: grid; min-width: 0; min-height: 82px; grid-template-columns: 34px minmax(0, 1fr); align-items: center; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--glass); }
 .skill-badge-card > span:last-child { display: grid; min-width: 0; gap: 4px; }
 .skill-badge-card strong { overflow-wrap: anywhere; font-size: .73rem; }
 .skill-badge-card small { color: var(--muted); font-size: .63rem; line-height: 1.25; }
-.skill-badge-silhouette { width: 26px; height: 30px; border: 1px solid var(--muted); border-radius: 50% 50% 8px 8px; opacity: .45; }
-.skill-badge-card.is-earned .skill-badge-silhouette { border-color: var(--info-accent); background: color-mix(in srgb, var(--info-accent) 20%, transparent); opacity: 1; }
+.badge-medal { width: 34px; height: 40px; fill: none; stroke: var(--muted); stroke-width: 1.35; stroke-linecap: round; stroke-linejoin: round; }
+.badge-medal .badge-medal-face { fill: color-mix(in srgb, var(--info-accent) 12%, transparent); }
+.badge-medal.is-earned { stroke: var(--info-accent); }
+.badge-medal.is-earned .badge-medal-face { fill: color-mix(in srgb, var(--info-accent) 18%, transparent); }
+.badge-medal.is-locked { opacity: .38; }
 .skill-badge-card.is-earned strong { color: var(--info-accent); }
 
 @media (max-width: 360px) {

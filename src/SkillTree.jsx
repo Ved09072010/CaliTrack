@@ -8,6 +8,7 @@ import { getBadges, getProgress } from "./progression.js";
 import { getSkillStates } from "./skillTree.js";
 import { BottomSheet, Icon, IconButton } from "./ui.jsx";
 import RankCrest from "./RankCrest.jsx";
+import BadgeGrid from "./BadgeGrid.jsx";
 
 const EMPTY_MASTERY = { mastered: [], seen: [], initialized: false, badgesSeen: [], rankSeen: "Rookie" };
 const STATE_LABELS = {
@@ -188,21 +189,6 @@ function SkillBranch({ branch, nodes, progress, onBack, onOpenNode, onOpenPath }
   </>;
 }
 
-function SimpleBadgeGrid({ badges, onBack }) {
-  return <>
-    <header className="skill-branch-header">
-      <IconButton label="Back to skill overview" onClick={onBack}><Icon name="back" /></IconButton>
-      <div><h2>Badges</h2><span>{badges.filter((badge) => badge.earned).length} / {badges.length} earned</span></div>
-    </header>
-    <div className="skill-badge-grid">
-      {badges.map((badge) => <article className={`skill-badge-card${badge.earned ? " is-earned" : " is-locked"}`} key={badge.id}>
-        <span className="skill-badge-silhouette" aria-hidden="true" />
-        <span><strong>{badge.name}</strong><small>{badge.earned ? "Earned" : badge.requirement}</small></span>
-      </article>)}
-    </div>
-  </>;
-}
-
 export default function SkillTree({ workouts, onLogExercise, onProgressionChange }) {
   const [savedMastery, setSavedMastery] = useState(readMastery);
   const [view, setView] = useState("overview");
@@ -272,7 +258,7 @@ export default function SkillTree({ workouts, onLogExercise, onProgressionChange
       onOpenNode={openNode}
       onOpenPath={setSelectedPath}
     />}
-    {view === "badges" && <SimpleBadgeGrid badges={badges} onBack={() => setView("overview")} />}
+    {view === "badges" && <BadgeGrid badges={badges} onBack={() => setView("overview")} />}
 
     <BottomSheet open={Boolean(selected)} title={selected?.exerciseName || "Skill"} onClose={() => setSelectedNodeId("")}>
       {selected && <div className="skill-node-sheet">
